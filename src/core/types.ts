@@ -55,6 +55,11 @@ export interface WorkflowJob {
   steps: WorkflowStep[];
 }
 
+export interface WorkflowOptions {
+  defaultBranch: "main" | "master";
+  includeBuildStep: boolean;
+}
+
 export interface WorkflowConfig {
   name: string;
   on: {

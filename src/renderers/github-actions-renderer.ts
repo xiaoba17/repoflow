@@ -1,6 +1,6 @@
 import YAML from "yaml";
 
-import type { ProjectInfo, WorkflowConfig, WorkflowStep } from "../core/types.js";
+import type { ProjectInfo, WorkflowConfig, WorkflowOptions, WorkflowStep } from "../core/types.js";
 
 function createSetupStep(projectInfo: ProjectInfo): WorkflowStep | null {
   switch (projectInfo.language) {
@@ -36,7 +36,13 @@ function createSetupStep(projectInfo: ProjectInfo): WorkflowStep | null {
   }
 }
 
-export function renderGitHubActionsWorkflow(projectInfo: ProjectInfo): string {
+export function renderGitHubActionsWorkflow(
+  projectInfo: ProjectInfo,
+  options: WorkflowOptions = {
+    defaultBranch: "main",
+    includeBuildStep: true,
+  },
+): string {
   const steps: WorkflowStep[] = [{ uses: "actions/checkout@v4" }];
   const setupStep = createSetupStep(projectInfo);
 
@@ -52,14 +58,14 @@ export function renderGitHubActionsWorkflow(projectInfo: ProjectInfo): string {
     steps.push({ run: projectInfo.testCommand });
   }
 
-  if (projectInfo.buildCommand) {
+  if (options.includeBuildStep && projectInfo.buildCommand) {
     steps.push({ run: projectInfo.buildCommand });
   }
 
   const workflow: WorkflowConfig = {
     name: "CI",
     on: {
-      push: { branches: ["main"] },
+      push: { branches: [options.defaultBranch] },
       pull_request: {},
     },
     jobs: {

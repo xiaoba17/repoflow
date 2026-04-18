@@ -28,6 +28,48 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml).toContain("run: pnpm build");
   });
 
+  it("renders a workflow against the selected default branch", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        testCommand: "npm test",
+        buildCommand: "npm run build",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      {
+        defaultBranch: "master",
+        includeBuildStep: true,
+      },
+    );
+
+    expect(yaml).toContain("- master");
+  });
+
+  it("omits the build step when build is disabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        testCommand: "npm test",
+        buildCommand: "npm run build",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      {
+        defaultBranch: "main",
+        includeBuildStep: false,
+      },
+    );
+
+    expect(yaml).not.toContain("run: npm run build");
+  });
+
   it("renders a minimal python CI workflow", () => {
     const yaml = renderGitHubActionsWorkflow({
       language: "python",
