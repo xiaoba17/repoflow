@@ -51,7 +51,7 @@ export interface WorkflowStep {
 }
 
 export interface WorkflowJob {
-  runsOn: string;
+  "runs-on": string;
   steps: WorkflowStep[];
 }
 

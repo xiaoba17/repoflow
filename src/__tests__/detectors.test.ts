@@ -65,4 +65,46 @@ describe("detectProject", () => {
     expect(result.ciProvider).toBe("github-actions");
     expect(result.confidence).toBe(0);
   });
+
+  it("detects a python project from requirements.txt", async () => {
+    const root = await createRepo({
+      "requirements.txt": "pytest==8.3.0\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("python");
+    expect(result.packageManager).toBe("pip");
+    expect(result.runtimeVersion).toBeUndefined();
+    expect(result.ciProvider).toBe("github-actions");
+    expect(result.confidence).toBeGreaterThan(0.7);
+  });
+
+  it("detects a poetry project from pyproject.toml and poetry.lock", async () => {
+    const root = await createRepo({
+      "pyproject.toml": "[tool.poetry]\nname = 'demo'\n",
+      "poetry.lock": "[[package]]\nname = 'pytest'\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("python");
+    expect(result.packageManager).toBe("poetry");
+    expect(result.ciProvider).toBe("github-actions");
+    expect(result.confidence).toBeGreaterThan(0.8);
+  });
+
+  it("detects a go project from go.mod", async () => {
+    const root = await createRepo({
+      "go.mod": "module example.com/demo\n\ngo 1.22.3\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("go");
+    expect(result.packageManager).toBe("go");
+    expect(result.runtimeVersion).toBe("1.22");
+    expect(result.ciProvider).toBe("github-actions");
+    expect(result.confidence).toBeGreaterThan(0.8);
+  });
 });

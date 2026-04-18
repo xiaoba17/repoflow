@@ -59,4 +59,24 @@ describe("scanRepository", () => {
     expect(result.rawFiles.packageJson).toBeNull();
     expect(result.rawFiles.pyprojectToml).toBeNull();
   });
+
+  it("reads python and go manifest files when present", async () => {
+    const root = await createRepo({
+      "requirements.txt": "pytest==8.0.0",
+      "pyproject.toml": "[project]\nname = 'demo'\n",
+      "poetry.lock": "[[package]]\nname = 'pytest'\n",
+      "go.mod": "module example.com/demo\n\ngo 1.22.0\n",
+    });
+
+    const result = await scanRepository(root);
+
+    expect(result.hasRequirementsTxt).toBe(true);
+    expect(result.hasPyprojectToml).toBe(true);
+    expect(result.hasPoetryLock).toBe(true);
+    expect(result.hasGoMod).toBe(true);
+    expect(result.rawFiles.requirementsTxt).toContain("pytest==8.0.0");
+    expect(result.rawFiles.pyprojectToml).toContain("[project]");
+    expect(result.rawFiles.poetryLock).toContain("[[package]]");
+    expect(result.rawFiles.goMod).toContain("go 1.22.0");
+  });
 });

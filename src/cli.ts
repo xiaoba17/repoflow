@@ -3,6 +3,7 @@
 import { Command } from "commander";
 
 import { runDetectCommand } from "./commands/detect.js";
+import { runGenerateCommand } from "./commands/generate.js";
 import { runPreviewCommand } from "./commands/preview.js";
 
 const program = new Command();
@@ -21,5 +22,10 @@ program
   .command("preview")
   .option("--cwd <path>", "Repository path to inspect")
   .action(runPreviewCommand);
+
+program
+  .command("generate")
+  .option("--cwd <path>", "Repository path to inspect")
+  .action(runGenerateCommand);
 
 await program.parseAsync(process.argv);
