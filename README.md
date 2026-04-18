@@ -4,6 +4,8 @@ RepoFlow is a lightweight CLI that detects your repository type and generates a 
 
 Current status: `P2` is complete. The project can detect `Node.js`, `Python`, and `Go` repositories, preview and generate GitHub Actions workflows, and guide users through an interactive `init` flow.
 
+CLI failures are reported as a single-line error on stderr with a non-zero exit code, while user-cancelled interactive flows exit cleanly without writing files.
+
 ## Current Capabilities
 
 - Detect `Node.js`, `Python`, and `Go` repositories
