@@ -230,6 +230,75 @@ describe("CLI", () => {
     );
   });
 
+  it("prints a unified error and exits with code 1 when generate fails", async () => {
+    const root = await createRepo({
+      "README.md": "# demo",
+    });
+
+    await expect(
+      execFileAsync("node", ["--import", "tsx", "src/cli.ts", "generate", "--cwd", root], {
+        cwd: path.resolve("."),
+      }),
+    ).rejects.toMatchObject({
+      code: 1,
+      stdout: "",
+      stderr: "Error: Unable to generate workflow for an unknown project.\n",
+    });
+  });
+
+  it("prints a unified error and exits with code 1 when init fails", async () => {
+    const root = await createRepo({
+      "README.md": "# demo",
+    });
+
+    await expect(
+      execFileAsync("node", ["--import", "tsx", "src/cli.ts", "init", "--cwd", root], {
+        cwd: path.resolve("."),
+      }),
+    ).rejects.toMatchObject({
+      code: 1,
+      stdout: "",
+      stderr: "Error: Unable to initialize workflow for an unknown project.\n",
+    });
+  });
+
+  it("exits successfully and stays silent when init is cancelled at project confirmation", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    prompts.inject([false]);
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    await expect(runInitCommand({ cwd: root })).resolves.toBeUndefined();
+    expect(await fs.pathExists(workflowPath)).toBe(false);
+  });
+
+  it("exits successfully and does not write files when init is cancelled at final write confirmation", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+          build: "tsc -p tsconfig.json",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    prompts.inject([true, "main", true, false]);
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    await expect(runInitCommand({ cwd: root })).resolves.toBeUndefined();
+    expect(await fs.pathExists(workflowPath)).toBe(false);
+  });
+
   it("detects a node fixture repository", async () => {
     const root = await createRepoFromFixture("node-pnpm");
 

@@ -1,4 +1,5 @@
 import { previewWorkflow, resolveProjectInfo, writeWorkflowFile } from "../core/engine.js";
+import { RepoFlowError } from "../utils/errors.js";
 import { resolveCwd } from "../utils/fs.js";
 import { writeLine } from "../utils/logger.js";
 import { confirm, select } from "../utils/prompts.js";
@@ -8,7 +9,7 @@ export async function runInitCommand(options: { cwd?: string }): Promise<void> {
   const projectInfo = await resolveProjectInfo(cwd);
 
   if (projectInfo.language === "unknown") {
-    throw new Error("Unable to initialize workflow for an unknown project.");
+    throw new RepoFlowError("Unable to initialize workflow for an unknown project.");
   }
 
   const confirmedProject = await confirm(

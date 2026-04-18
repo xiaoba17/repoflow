@@ -6,6 +6,8 @@ import { runDetectCommand } from "./commands/detect.js";
 import { runGenerateCommand } from "./commands/generate.js";
 import { runInitCommand } from "./commands/init.js";
 import { runPreviewCommand } from "./commands/preview.js";
+import { formatErrorMessage } from "./utils/errors.js";
+import { writeErrorLine } from "./utils/logger.js";
 
 const program = new Command();
 
@@ -34,4 +36,9 @@ program
   .option("--cwd <path>", "Repository path to inspect")
   .action(runInitCommand);
 
-await program.parseAsync(process.argv);
+try {
+  await program.parseAsync(process.argv);
+} catch (error) {
+  writeErrorLine(formatErrorMessage(error));
+  process.exitCode = 1;
+}

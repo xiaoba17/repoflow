@@ -3,6 +3,7 @@ import path from "node:path";
 import { detectProject } from "../detectors/index.js";
 import { renderGitHubActionsWorkflow } from "../renderers/github-actions-renderer.js";
 import { applyRules } from "../rules/index.js";
+import { RepoFlowError } from "../utils/errors.js";
 import { fs } from "../utils/fs.js";
 import { confirm } from "../utils/prompts.js";
 import type { ProjectInfo, WorkflowOptions } from "./types.js";
@@ -45,7 +46,7 @@ export async function generateWorkflow(
   const projectInfo = await resolveProjectInfo(rootPath);
 
   if (projectInfo.language === "unknown") {
-    throw new Error("Unable to generate workflow for an unknown project.");
+    throw new RepoFlowError("Unable to generate workflow for an unknown project.");
   }
 
   return renderProjectWorkflow(projectInfo, options);
