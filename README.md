@@ -2,7 +2,7 @@
 
 RepoFlow is a lightweight CLI that detects your repository type and generates a minimal GitHub Actions CI workflow.
 
-Current status: `P1` is complete. The project can detect `Node.js`, `Python`, and `Go` repositories, preview a GitHub Actions workflow, and generate `.github/workflows/ci.yml` with overwrite confirmation.
+Current status: `P2` is complete. The project can detect `Node.js`, `Python`, and `Go` repositories, preview and generate GitHub Actions workflows, and guide users through an interactive `init` flow.
 
 ## Current Capabilities
 
@@ -13,12 +13,14 @@ Current status: `P1` is complete. The project can detect `Node.js`, `Python`, an
 - Preview a minimal GitHub Actions CI workflow in the terminal
 - Generate `.github/workflows/ci.yml`
 - Ask before overwriting an existing workflow file
+- Guide setup through `repoflow init`
+- Provide fixture repositories for sample inputs and regression coverage
 
 ## Not Implemented Yet
 
-- `repoflow init`
-- Test fixtures for sample repositories
-- npm publishing flow
+- Tarball content slimming for npm publish
+- Automated release workflow
+- Framework-specific detection beyond the current language-level support
 
 ## Requirements
 
@@ -39,6 +41,7 @@ Run commands directly from TypeScript source:
 npm run dev -- detect --cwd /path/to/repo
 npm run dev -- preview --cwd /path/to/repo
 npm run dev -- generate --cwd /path/to/repo
+npm run dev -- init --cwd /path/to/repo
 ```
 
 Build the CLI:
@@ -63,6 +66,7 @@ npm link
 repoflow detect --cwd /path/to/repo
 repoflow preview --cwd /path/to/repo
 repoflow generate --cwd /path/to/repo
+repoflow init --cwd /path/to/repo
 ```
 
 You can also run the built file directly:
@@ -71,6 +75,7 @@ You can also run the built file directly:
 node dist/cli.js detect --cwd /path/to/repo
 node dist/cli.js preview --cwd /path/to/repo
 node dist/cli.js generate --cwd /path/to/repo
+node dist/cli.js init --cwd /path/to/repo
 ```
 
 ## Commands
@@ -154,6 +159,24 @@ Example output:
 /path/to/repo/.github/workflows/ci.yml
 ```
 
+### `repoflow init`
+
+Runs a guided setup flow for `.github/workflows/ci.yml`.
+
+Flow:
+
+- Confirms the detected project type
+- Lets you choose the default branch: `main` or `master`
+- Lets you keep or remove the detected build step when one exists
+- Shows the final YAML preview before writing
+- Asks before overwriting an existing workflow
+
+Example:
+
+```bash
+repoflow init --cwd /path/to/repo
+```
+
 ## Supported Project Types
 
 Current implementation:
@@ -174,12 +197,35 @@ Default runtime and command behavior:
 - `poetry`: `poetry install --no-interaction`, `poetry run pytest`
 - `go`: `go mod download`, `go test ./...`, `go build ./...`
 
+## Fixtures
+
+The repository includes minimal sample projects under `fixtures/`:
+
+- `fixtures/node-npm`
+- `fixtures/node-pnpm`
+- `fixtures/python-basic`
+- `fixtures/go-basic`
+
+These fixtures are used both as example repositories and as regression inputs for CLI tests.
+
+## Publish Readiness
+
+The package metadata now includes `repository`, `homepage`, and `bugs` fields for npm publishing.
+
+For local packaging validation, use:
+
+```bash
+npm_config_cache=/tmp/repoflow-npm-cache npm pack --dry-run
+```
+
+This uses a temporary npm cache to avoid local cache permission issues.
+
 ## Roadmap
 
-- Add interactive `repoflow init`
-- Add test fixtures for more repository types
-- Expand README usage examples
-- Prepare npm publishing flow
+- Improve publish packaging with a tighter tarball file list
+- Add more fixture repositories and scenario coverage
+- Add framework-level detection for tools like Next.js, FastAPI, and Gin
+- Explore Dockerfile generation and additional CI templates
 
 ## License
 
