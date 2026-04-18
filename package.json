@@ -15,9 +15,20 @@
   "keywords": [
     "cli",
     "ci",
+    "init",
     "github-actions",
-    "workflow"
+    "workflow",
+    "automation",
+    "typescript"
   ],
+  "homepage": "https://github.com/xiaoba17/repoflow#readme",
+  "bugs": {
+    "url": "https://github.com/xiaoba17/repoflow/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoba17/repoflow.git"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=20"
