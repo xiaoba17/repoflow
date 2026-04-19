@@ -46,6 +46,7 @@ describe("detectProject", () => {
     const result = await detectProject(root);
 
     expect(result.language).toBe("node");
+    expect(result.framework).toBeUndefined();
     expect(result.packageManager).toBe("pnpm");
     expect(result.runtimeVersion).toBe("20");
     expect(result.testCommand).toBe("pnpm test");
@@ -69,9 +70,46 @@ describe("detectProject", () => {
     const result = await detectProject(root);
 
     expect(result.language).toBe("node");
+    expect(result.framework).toBeUndefined();
     expect(result.packageManager).toBe("npm");
     expect(result.testCommand).toBe("npm test");
     expect(result.buildCommand).toBe("npm run build");
+  });
+
+  it("detects a next.js project from package dependencies", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        dependencies: {
+          next: "15.0.0",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.framework).toBe("nextjs");
+    expect(result.packageManager).toBe("npm");
+  });
+
+  it("detects a vite project from package dependencies", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        devDependencies: {
+          vite: "^6.0.0",
+        },
+      }),
+      "pnpm-lock.yaml": "lockfileVersion: '9.0'",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.framework).toBe("vite");
+    expect(result.packageManager).toBe("pnpm");
   });
 
   it("returns unknown when no supported project files are present", async () => {
@@ -94,6 +132,7 @@ describe("detectProject", () => {
     const result = await detectProject(root);
 
     expect(result.language).toBe("python");
+    expect(result.framework).toBeUndefined();
     expect(result.packageManager).toBe("pip");
     expect(result.runtimeVersion).toBeUndefined();
     expect(result.ciProvider).toBe("github-actions");
@@ -109,9 +148,22 @@ describe("detectProject", () => {
     const result = await detectProject(root);
 
     expect(result.language).toBe("python");
+    expect(result.framework).toBeUndefined();
     expect(result.packageManager).toBe("poetry");
     expect(result.ciProvider).toBe("github-actions");
     expect(result.confidence).toBeGreaterThan(0.8);
+  });
+
+  it("detects a fastapi project from python dependencies", async () => {
+    const root = await createRepo({
+      "requirements.txt": "fastapi==0.115.0\npytest==8.3.0\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("python");
+    expect(result.framework).toBe("fastapi");
+    expect(result.packageManager).toBe("pip");
   });
 
   it("detects a go project from go.mod", async () => {
@@ -122,9 +174,22 @@ describe("detectProject", () => {
     const result = await detectProject(root);
 
     expect(result.language).toBe("go");
+    expect(result.framework).toBeUndefined();
     expect(result.packageManager).toBe("go");
     expect(result.runtimeVersion).toBe("1.22");
     expect(result.ciProvider).toBe("github-actions");
     expect(result.confidence).toBeGreaterThan(0.8);
+  });
+
+  it("detects a gin project from go.mod dependencies", async () => {
+    const root = await createRepo({
+      "go.mod": "module example.com/demo\n\ngo 1.22.3\n\nrequire github.com/gin-gonic/gin v1.10.0\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("go");
+    expect(result.framework).toBe("gin");
+    expect(result.packageManager).toBe("go");
   });
 });

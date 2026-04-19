@@ -62,6 +62,7 @@ describe("CLI", () => {
 
     const parsed = JSON.parse(stdout);
     expect(parsed.language).toBe("node");
+    expect(parsed.framework).toBeUndefined();
     expect(parsed.packageManager).toBe("npm");
     expect(parsed.testCommand).toBe("npm test");
   });
@@ -89,6 +90,29 @@ describe("CLI", () => {
     expect(stdout).toContain("actions/setup-node@v6");
     expect(stdout).toContain("run: yarn install --frozen-lockfile");
     expect(stdout).toContain("run: yarn test");
+  });
+
+  it("uses a framework-aware default build command when a next.js project has no build script", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        dependencies: {
+          next: "15.0.0",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "preview", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    expect(stdout).toContain("run: npm ci");
+    expect(stdout).toContain("run: npx next build");
   });
 
   it("prints python detection results as JSON", async () => {
@@ -312,7 +336,25 @@ describe("CLI", () => {
 
     const parsed = JSON.parse(stdout);
     expect(parsed.language).toBe("node");
+    expect(parsed.framework).toBeUndefined();
     expect(parsed.packageManager).toBe("pnpm");
+  });
+
+  it("detects a next.js fixture repository", async () => {
+    const root = await createRepoFromFixture("node-nextjs");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "detect", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed.language).toBe("node");
+    expect(parsed.framework).toBe("nextjs");
+    expect(parsed.packageManager).toBe("npm");
   });
 
   it("previews a python fixture repository", async () => {
@@ -330,6 +372,22 @@ describe("CLI", () => {
     expect(stdout).toContain("run: pytest");
   });
 
+  it("previews a fastapi fixture repository", async () => {
+    const root = await createRepoFromFixture("python-fastapi");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "preview", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    expect(stdout).toContain("actions/setup-python@v5");
+    expect(stdout).toContain("run: pip install -r requirements.txt");
+    expect(stdout).toContain("run: pytest");
+  });
+
   it("generates a workflow from a go fixture repository", async () => {
     const root = await createRepoFromFixture("go-basic");
 
@@ -339,5 +397,18 @@ describe("CLI", () => {
     const written = await fs.readFile(workflowPath, "utf8");
     expect(written).toContain("actions/setup-go@v5");
     expect(written).toContain("run: go build ./...");
+  });
+
+  it("initializes a workflow from a vite fixture repository", async () => {
+    const root = await createRepoFromFixture("node-vite");
+
+    prompts.inject([true, "main", true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("actions/setup-node@v6");
+    expect(written).toContain("run: pnpm build");
   });
 });
