@@ -174,7 +174,7 @@ describe("CLI", () => {
     const workflowPath = path.join(root, ".github/workflows/ci.yml");
     const written = await fs.readFile(workflowPath, "utf8");
     expect(written).toContain("- master");
-    expect(written).toContain("run: npm build");
+    expect(written).toContain("run: npm run build");
   });
 
   it("initializes a workflow without the build step when disabled", async () => {

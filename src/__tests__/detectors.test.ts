@@ -54,6 +54,26 @@ describe("detectProject", () => {
     expect(result.confidence).toBeGreaterThan(0.8);
   });
 
+  it("uses npm run build for npm projects with a build script", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+          build: "tsc -p tsconfig.json",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.packageManager).toBe("npm");
+    expect(result.testCommand).toBe("npm test");
+    expect(result.buildCommand).toBe("npm run build");
+  });
+
   it("returns unknown when no supported project files are present", async () => {
     const root = await createRepo({
       "README.md": "# demo",

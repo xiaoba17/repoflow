@@ -38,6 +38,17 @@ function commandPrefix(packageManager: ProjectInfo["packageManager"]): string {
   }
 }
 
+function scriptCommand(
+  packageManager: ProjectInfo["packageManager"],
+  scriptName: "test" | "build",
+): string {
+  if (packageManager === "npm" && scriptName === "build") {
+    return "npm run build";
+  }
+
+  return `${commandPrefix(packageManager)} ${scriptName}`;
+}
+
 function normalizeRuntimeVersion(version?: string): string | undefined {
   if (!version) {
     return undefined;
@@ -54,14 +65,13 @@ export function detectNodeProject(scanResult: RepoScanResult): ProjectInfo | nul
 
   const packageJson = JSON.parse(scanResult.rawFiles.packageJson) as NodePackageJson;
   const packageManager = inferPackageManager(scanResult);
-  const prefix = commandPrefix(packageManager);
 
   return {
     language: "node",
     packageManager,
     runtimeVersion: normalizeRuntimeVersion(packageJson.engines?.node) ?? "20",
-    testCommand: packageJson.scripts?.test ? `${prefix} test` : undefined,
-    buildCommand: packageJson.scripts?.build ? `${prefix} build` : undefined,
+    testCommand: packageJson.scripts?.test ? scriptCommand(packageManager, "test") : undefined,
+    buildCommand: packageJson.scripts?.build ? scriptCommand(packageManager, "build") : undefined,
     ciProvider: "github-actions",
     confidence: 0.95,
   };
