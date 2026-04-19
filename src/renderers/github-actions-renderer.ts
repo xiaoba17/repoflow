@@ -11,7 +11,7 @@ function createSetupStep(projectInfo: ProjectInfo): WorkflowStep | null {
         : runtimeVersion;
 
       return {
-        uses: "actions/setup-node@v4",
+        uses: "actions/setup-node@v6",
         with: {
           "node-version": normalizedVersion,
         },
@@ -43,7 +43,7 @@ export function renderGitHubActionsWorkflow(
     includeBuildStep: true,
   },
 ): string {
-  const steps: WorkflowStep[] = [{ uses: "actions/checkout@v4" }];
+  const steps: WorkflowStep[] = [{ uses: "actions/checkout@v6" }];
   const setupStep = createSetupStep(projectInfo);
 
   if (setupStep) {

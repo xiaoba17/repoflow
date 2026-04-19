@@ -19,9 +19,9 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml).toContain("push:");
     expect(yaml).toContain("branches:");
     expect(yaml).toContain("- main");
-    expect(yaml).toContain("uses: actions/checkout@v4");
+    expect(yaml).toContain("uses: actions/checkout@v6");
     expect(yaml).toContain("runs-on: ubuntu-latest");
-    expect(yaml).toContain("uses: actions/setup-node@v4");
+    expect(yaml).toContain("uses: actions/setup-node@v6");
     expect(yaml).toContain("node-version: 20");
     expect(yaml).toContain("run: pnpm install --frozen-lockfile");
     expect(yaml).toContain("run: pnpm test");

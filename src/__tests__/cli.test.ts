@@ -86,7 +86,7 @@ describe("CLI", () => {
     );
 
     expect(stdout).toContain("name: CI");
-    expect(stdout).toContain("actions/setup-node@v4");
+    expect(stdout).toContain("actions/setup-node@v6");
     expect(stdout).toContain("run: yarn install --frozen-lockfile");
     expect(stdout).toContain("run: yarn test");
   });
