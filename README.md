@@ -2,13 +2,14 @@
 
 RepoFlow is a lightweight CLI that detects your repository type and generates a minimal GitHub Actions CI workflow.
 
-Current status: `P2` is complete. The project can detect `Node.js`, `Python`, and `Go` repositories, preview and generate GitHub Actions workflows, and guide users through an interactive `init` flow.
+Current status: `P3` is complete. The project can detect `Node.js`, `Python`, and `Go` repositories, identify a first set of common frameworks, preview and generate GitHub Actions workflows, and guide users through an interactive `init` flow.
 
 CLI failures are reported as a single-line error on stderr with a non-zero exit code, while user-cancelled interactive flows exit cleanly without writing files.
 
 ## Current Capabilities
 
 - Detect `Node.js`, `Python`, and `Go` repositories
+- Detect framework hints for `Next.js`, `Vite`, `FastAPI`, and `Gin`
 - Infer package managers for `npm`, `pnpm`, `yarn`, `pip`, `poetry`, and `go`
 - Read project metadata such as Node scripts, Node runtime, and `go.mod`
 - Apply default install / test / build commands through a normalized rules layer
@@ -22,7 +23,7 @@ CLI failures are reported as a single-line error on stderr with a non-zero exit 
 
 - Tarball content slimming for npm publish
 - Automated release workflow
-- Framework-specific detection beyond the current language-level support
+- Enhanced workflow options such as dependency cache and lint steps
 
 ## Requirements
 
@@ -97,6 +98,7 @@ Example output:
 ```json
 {
   "language": "node",
+  "framework": "nextjs",
   "packageManager": "pnpm",
   "runtimeVersion": "20",
   "installCommand": "pnpm install --frozen-lockfile",
@@ -187,6 +189,13 @@ Current implementation:
 - Python
 - Go
 
+Framework detection:
+
+- Next.js
+- Vite
+- FastAPI
+- Gin
+
 Default runtime and command behavior:
 
 - Node.js: default runtime `20`
@@ -205,8 +214,12 @@ The repository includes minimal sample projects under `fixtures/`:
 
 - `fixtures/node-npm`
 - `fixtures/node-pnpm`
+- `fixtures/node-nextjs`
+- `fixtures/node-vite`
 - `fixtures/python-basic`
+- `fixtures/python-fastapi`
 - `fixtures/go-basic`
+- `fixtures/go-gin`
 
 These fixtures are used both as example repositories and as regression inputs for CLI tests.
 
@@ -226,8 +239,8 @@ This uses a temporary npm cache to avoid local cache permission issues.
 
 - Improve publish packaging with a tighter tarball file list
 - Add more fixture repositories and scenario coverage
-- Add framework-level detection for tools like Next.js, FastAPI, and Gin
 - Explore Dockerfile generation and additional CI templates
+- Add enhanced workflow options such as cache and lint steps
 
 ## License
 
