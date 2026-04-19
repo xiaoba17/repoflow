@@ -1,5 +1,7 @@
 export type LanguageType = "node" | "python" | "go" | "unknown";
 
+export type FrameworkType = "nextjs" | "vite" | "fastapi" | "gin";
+
 export type PackageManagerType =
   | "npm"
   | "pnpm"
@@ -33,7 +35,7 @@ export interface RepoScanResult {
 
 export interface ProjectInfo {
   language: LanguageType;
-  framework?: string;
+  framework?: FrameworkType;
   packageManager?: PackageManagerType;
   runtimeVersion?: string;
   installCommand?: string;

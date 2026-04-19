@@ -8,6 +8,8 @@ interface NodePackageJson {
   engines?: {
     node?: string;
   };
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
 }
 
 function inferPackageManager(scanResult: RepoScanResult): ProjectInfo["packageManager"] | undefined {
@@ -58,6 +60,23 @@ function normalizeRuntimeVersion(version?: string): string | undefined {
   return match?.[0];
 }
 
+function detectFramework(packageJson: NodePackageJson): ProjectInfo["framework"] | undefined {
+  const dependencies = {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies,
+  };
+
+  if (dependencies.next) {
+    return "nextjs";
+  }
+
+  if (dependencies.vite) {
+    return "vite";
+  }
+
+  return undefined;
+}
+
 export function detectNodeProject(scanResult: RepoScanResult): ProjectInfo | null {
   if (!scanResult.hasPackageJson || !scanResult.rawFiles.packageJson) {
     return null;
@@ -65,9 +84,11 @@ export function detectNodeProject(scanResult: RepoScanResult): ProjectInfo | nul
 
   const packageJson = JSON.parse(scanResult.rawFiles.packageJson) as NodePackageJson;
   const packageManager = inferPackageManager(scanResult);
+  const framework = detectFramework(packageJson);
 
   return {
     language: "node",
+    framework,
     packageManager,
     runtimeVersion: normalizeRuntimeVersion(packageJson.engines?.node) ?? "20",
     testCommand: packageJson.scripts?.test ? scriptCommand(packageManager, "test") : undefined,
