@@ -1,0 +1,6 @@
+[[package]]
+name = "pytest"
+version = "8.3.0"
+description = "pytest package fixture"
+optional = false
+python-versions = ">=3.8"

@@ -1,0 +1,8 @@
+{
+  "name": "node-yarn-fixture",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "build": "vite build"
+  }
+}

@@ -357,6 +357,25 @@ describe("CLI", () => {
     expect(parsed.packageManager).toBe("npm");
   });
 
+  it("detects a yarn fixture repository", async () => {
+    const root = await createRepoFromFixture("node-yarn");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "detect", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed.language).toBe("node");
+    expect(parsed.framework).toBeUndefined();
+    expect(parsed.packageManager).toBe("yarn");
+    expect(parsed.testCommand).toBe("yarn test");
+    expect(parsed.buildCommand).toBe("yarn build");
+  });
+
   it("previews a python fixture repository", async () => {
     const root = await createRepoFromFixture("python-basic");
 
@@ -388,6 +407,22 @@ describe("CLI", () => {
     expect(stdout).toContain("run: pytest");
   });
 
+  it("previews a poetry fixture repository", async () => {
+    const root = await createRepoFromFixture("python-poetry");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "preview", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    expect(stdout).toContain("actions/setup-python@v5");
+    expect(stdout).toContain("run: poetry install --no-interaction");
+    expect(stdout).toContain("run: poetry run pytest");
+  });
+
   it("generates a workflow from a go fixture repository", async () => {
     const root = await createRepoFromFixture("go-basic");
 
@@ -410,5 +445,18 @@ describe("CLI", () => {
     const written = await fs.readFile(workflowPath, "utf8");
     expect(written).toContain("actions/setup-node@v6");
     expect(written).toContain("run: pnpm build");
+  });
+
+  it("keeps the existing workflow for a fixture repository when overwrite is declined", async () => {
+    const root = await createRepoFromFixture("node-existing-workflow");
+
+    prompts.inject([false]);
+
+    await runGenerateCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("name: Existing CI");
+    expect(written).toContain('run: echo "existing"');
   });
 });

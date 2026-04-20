@@ -1,0 +1,9 @@
+[tool.poetry]
+name = "python-poetry-fixture"
+version = "0.1.0"
+description = "Fixture project for RepoFlow poetry detection"
+authors = ["RepoFlow <dev@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pytest = "^8.3.0"
