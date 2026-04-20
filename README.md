@@ -29,6 +29,21 @@ CLI failures are reported as a single-line error on stderr with a non-zero exit 
 - Node.js `20+`
 - npm `10+` recommended
 
+## Install
+
+RepoFlow is currently distributed as an npm CLI package.
+
+Install from npm:
+
+```bash
+npm install -g repoflow
+```
+
+Notes:
+
+- GitHub Releases currently provide source snapshots and release notes only.
+- Standalone native binaries are not published yet.
+
 ## Install Dependencies
 
 ```bash
