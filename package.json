@@ -1,5 +1,5 @@
 {
-  "name": "repoflow",
+  "name": "@xiaoba17/repoflow",
   "version": "0.1.1",
   "description": "Detect repository type and generate minimal GitHub Actions CI workflows.",
   "type": "module",
@@ -35,6 +35,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xiaoba17/repoflow.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "license": "MIT",
   "engines": {

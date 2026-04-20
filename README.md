@@ -36,13 +36,14 @@ RepoFlow is currently distributed as an npm CLI package.
 Install from npm:
 
 ```bash
-npm install -g repoflow
+npm install -g @xiaoba17/repoflow
 ```
 
 Notes:
 
 - GitHub Releases currently provide source snapshots and release notes only.
 - Standalone native binaries are not published yet.
+- The installed CLI command remains `repoflow`.
 
 ## Install Dependencies
 
