@@ -1,0 +1,9 @@
+src/
+docs/
+fixtures/
+.github/
+node_modules/
+coverage/
+*.log
+.env
+.env.*

@@ -6,9 +6,16 @@
   "bin": {
     "repoflow": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "rm -rf dist && tsc -p tsconfig.json",
     "dev": "tsx src/cli.ts",
+    "pack:dry-run": "npm_config_cache=/tmp/repoflow-npm-cache npm pack --dry-run",
+    "release:check": "npm test && npm run build && npm run pack:dry-run",
     "test": "vitest run",
     "test:watch": "vitest"
   },
