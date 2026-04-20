@@ -2,7 +2,7 @@
 
 RepoFlow is a lightweight CLI that detects your repository type and generates a minimal GitHub Actions CI workflow.
 
-Current status: `P3` is complete. The project can detect `Node.js`, `Python`, and `Go` repositories, identify a first set of common frameworks, preview and generate GitHub Actions workflows, and guide users through an interactive `init` flow.
+Current status: `P4` is complete. The project can detect `Node.js`, `Python`, and `Go` repositories, identify a first set of common frameworks, preview and generate GitHub Actions workflows, guide users through an interactive `init` flow, and validate release readiness with a slimmer npm package plus fixture-backed regression coverage.
 
 CLI failures are reported as a single-line error on stderr with a non-zero exit code, while user-cancelled interactive flows exit cleanly without writing files.
 
@@ -21,7 +21,6 @@ CLI failures are reported as a single-line error on stderr with a non-zero exit 
 
 ## Not Implemented Yet
 
-- Tarball content slimming for npm publish
 - Automated release workflow
 - Enhanced workflow options such as dependency cache and lint steps
 
@@ -57,6 +56,12 @@ Run tests:
 
 ```bash
 npm test
+```
+
+Run the repository CI baseline locally:
+
+```bash
+npm run build
 ```
 
 ## Local CLI Usage
@@ -212,12 +217,15 @@ Default runtime and command behavior:
 
 The repository includes minimal sample projects under `fixtures/`:
 
+- `fixtures/node-existing-workflow`
 - `fixtures/node-npm`
 - `fixtures/node-pnpm`
+- `fixtures/node-yarn`
 - `fixtures/node-nextjs`
 - `fixtures/node-vite`
 - `fixtures/python-basic`
 - `fixtures/python-fastapi`
+- `fixtures/python-poetry`
 - `fixtures/go-basic`
 - `fixtures/go-gin`
 
@@ -225,19 +233,39 @@ These fixtures are used both as example repositories and as regression inputs fo
 
 ## Publish Readiness
 
-The package metadata now includes `repository`, `homepage`, and `bugs` fields for npm publishing.
+The published npm package is intentionally slimmed down to runtime assets only:
 
-For local packaging validation, use:
+- `dist/`
+- `README.md`
+- `LICENSE`
+- `package.json`
+
+Release checks are fixed as npm scripts so local validation stays consistent with the documented flow.
+
+Run the full release readiness check:
 
 ```bash
-npm_config_cache=/tmp/repoflow-npm-cache npm pack --dry-run
+npm run release:check
 ```
 
-This uses a temporary npm cache to avoid local cache permission issues.
+This runs:
+
+- `npm test`
+- `npm run build`
+- `npm run pack:dry-run`
+
+The `pack:dry-run` script uses a temporary npm cache directory to avoid local cache permission issues.
+
+## Continuous Validation
+
+The repository GitHub Actions workflow continuously validates the main development baseline with:
+
+- `npm ci`
+- `npm test`
+- `npm run build`
 
 ## Roadmap
 
-- Improve publish packaging with a tighter tarball file list
 - Add more fixture repositories and scenario coverage
 - Explore Dockerfile generation and additional CI templates
 - Add enhanced workflow options such as cache and lint steps
