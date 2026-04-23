@@ -65,6 +65,7 @@ describe("CLI", () => {
     expect(parsed.framework).toBeUndefined();
     expect(parsed.packageManager).toBe("npm");
     expect(parsed.testCommand).toBe("npm test");
+    expect(parsed.lintCommand).toBeUndefined();
   });
 
   it("prints workflow preview to stdout", async () => {
@@ -191,7 +192,7 @@ describe("CLI", () => {
       "package-lock.json": "{}",
     });
 
-    prompts.inject([true, "master", true, true]);
+    prompts.inject([true, "master", true, false, true]);
 
     await runInitCommand({ cwd: root });
 
@@ -199,6 +200,7 @@ describe("CLI", () => {
     const written = await fs.readFile(workflowPath, "utf8");
     expect(written).toContain("- master");
     expect(written).toContain("run: npm run build");
+    expect(written).not.toContain("cache:");
   });
 
   it("initializes a workflow without the build step when disabled", async () => {
@@ -213,7 +215,7 @@ describe("CLI", () => {
       "package-lock.json": "{}",
     });
 
-    prompts.inject([true, "main", false, true]);
+    prompts.inject([true, "main", false, false, true]);
 
     await runInitCommand({ cwd: root });
 
@@ -235,7 +237,7 @@ describe("CLI", () => {
       ".github/workflows/ci.yml": "name: Existing CI\n",
     });
 
-    prompts.inject([true, "main", true, true, false]);
+    prompts.inject([true, "main", true, false, true, false]);
 
     await runInitCommand({ cwd: root });
 
@@ -316,7 +318,7 @@ describe("CLI", () => {
       "package-lock.json": "{}",
     });
 
-    prompts.inject([true, "main", true, false]);
+    prompts.inject([true, "main", true, false, false]);
 
     const workflowPath = path.join(root, ".github/workflows/ci.yml");
     await expect(runInitCommand({ cwd: root })).resolves.toBeUndefined();
@@ -374,6 +376,22 @@ describe("CLI", () => {
     expect(parsed.packageManager).toBe("yarn");
     expect(parsed.testCommand).toBe("yarn test");
     expect(parsed.buildCommand).toBe("yarn build");
+  });
+
+  it("detects a lint command when a node project defines a lint script", async () => {
+    const root = await createRepoFromFixture("node-lint");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "detect", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed.language).toBe("node");
+    expect(parsed.lintCommand).toBe("npm run lint");
   });
 
   it("previews a python fixture repository", async () => {
@@ -437,14 +455,83 @@ describe("CLI", () => {
   it("initializes a workflow from a vite fixture repository", async () => {
     const root = await createRepoFromFixture("node-vite");
 
-    prompts.inject([true, "main", true, true]);
+    prompts.inject([true, "main", true, true, true]);
 
     await runInitCommand({ cwd: root });
 
     const workflowPath = path.join(root, ".github/workflows/ci.yml");
     const written = await fs.readFile(workflowPath, "utf8");
     expect(written).toContain("actions/setup-node@v6");
+    expect(written).toContain("cache: pnpm");
     expect(written).toContain("run: pnpm build");
+  });
+
+  it("initializes a workflow with optional node cache and lint step", async () => {
+    const root = await createRepoFromFixture("node-lint");
+
+    prompts.inject([true, "main", true, true, true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("cache: npm");
+    expect(written).toContain("run: npm run lint");
+    expect(written.indexOf("run: npm ci")).toBeLessThan(written.indexOf("run: npm run lint"));
+    expect(written.indexOf("run: npm run lint")).toBeLessThan(written.indexOf("run: npm test"));
+  });
+
+  it("initializes a python workflow with cache when pip is used", async () => {
+    const root = await createRepoFromFixture("python-basic");
+
+    prompts.inject([true, "main", true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("actions/setup-python@v5");
+    expect(written).toContain("cache: pip");
+  });
+
+  it("initializes a go workflow with module cache", async () => {
+    const root = await createRepoFromFixture("go-basic");
+
+    prompts.inject([true, "main", true, true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("actions/setup-go@v5");
+    expect(written).toContain("cache: true");
+  });
+
+  it("does not enable cache or lint when node init keeps the minimal template", async () => {
+    const root = await createRepoFromFixture("node-lint");
+
+    prompts.inject([true, "main", true, false, false, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).not.toContain("cache:");
+    expect(written).not.toContain("run: npm run lint");
+    expect(written).toContain("run: npm test");
+  });
+
+  it("does not prompt for cache on poetry projects during init", async () => {
+    const root = await createRepoFromFixture("python-poetry");
+
+    prompts.inject([true, "main", true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("run: poetry install --no-interaction");
+    expect(written).not.toContain("cache:");
   });
 
   it("keeps the existing workflow for a fixture repository when overwrite is declined", async () => {

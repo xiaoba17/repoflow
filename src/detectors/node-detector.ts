@@ -3,6 +3,7 @@ import type { ProjectInfo, RepoScanResult } from "../core/types.js";
 interface NodePackageJson {
   scripts?: {
     test?: string;
+    lint?: string;
     build?: string;
   };
   engines?: {
@@ -42,10 +43,14 @@ function commandPrefix(packageManager: ProjectInfo["packageManager"]): string {
 
 function scriptCommand(
   packageManager: ProjectInfo["packageManager"],
-  scriptName: "test" | "build",
+  scriptName: "test" | "lint" | "build",
 ): string {
-  if (packageManager === "npm" && scriptName === "build") {
-    return "npm run build";
+  if (packageManager === "npm") {
+    if (scriptName === "test") {
+      return "npm test";
+    }
+
+    return `npm run ${scriptName}`;
   }
 
   return `${commandPrefix(packageManager)} ${scriptName}`;
@@ -92,6 +97,7 @@ export function detectNodeProject(scanResult: RepoScanResult): ProjectInfo | nul
     packageManager,
     runtimeVersion: normalizeRuntimeVersion(packageJson.engines?.node) ?? "20",
     testCommand: packageJson.scripts?.test ? scriptCommand(packageManager, "test") : undefined,
+    lintCommand: packageJson.scripts?.lint ? scriptCommand(packageManager, "lint") : undefined,
     buildCommand: packageJson.scripts?.build ? scriptCommand(packageManager, "build") : undefined,
     ciProvider: "github-actions",
     confidence: 0.95,
