@@ -43,6 +43,8 @@ describe("renderGitHubActionsWorkflow", () => {
       {
         defaultBranch: "master",
         includeBuildStep: true,
+        enableCache: false,
+        includeLintStep: false,
       },
     );
 
@@ -64,6 +66,8 @@ describe("renderGitHubActionsWorkflow", () => {
       {
         defaultBranch: "main",
         includeBuildStep: false,
+        enableCache: false,
+        includeLintStep: false,
       },
     );
 
@@ -104,5 +108,115 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml).toContain("run: go mod download");
     expect(yaml).toContain("run: go test ./...");
     expect(yaml).toContain("run: go build ./...");
+  });
+
+  it("keeps the default minimal workflow free of cache and lint steps", () => {
+    const yaml = renderGitHubActionsWorkflow({
+      language: "node",
+      packageManager: "npm",
+      runtimeVersion: "20",
+      installCommand: "npm ci",
+      lintCommand: "npm run lint",
+      testCommand: "npm test",
+      buildCommand: "npm run build",
+      ciProvider: "github-actions",
+      confidence: 0.95,
+    });
+
+    expect(yaml).not.toContain("cache:");
+    expect(yaml).not.toContain("run: npm run lint");
+  });
+
+  it("adds node dependency cache when enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "pnpm",
+        runtimeVersion: "20",
+        installCommand: "pnpm install --frozen-lockfile",
+        testCommand: "pnpm test",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      {
+        defaultBranch: "main",
+        includeBuildStep: true,
+        enableCache: true,
+        includeLintStep: false,
+      },
+    );
+
+    expect(yaml).toContain("cache: pnpm");
+  });
+
+  it("adds pip cache when enabled for python", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "python",
+        packageManager: "pip",
+        runtimeVersion: "3.11",
+        installCommand: "pip install -r requirements.txt",
+        testCommand: "pytest",
+        ciProvider: "github-actions",
+        confidence: 0.9,
+      },
+      {
+        defaultBranch: "main",
+        includeBuildStep: true,
+        enableCache: true,
+        includeLintStep: false,
+      },
+    );
+
+    expect(yaml).toContain("cache: pip");
+  });
+
+  it("adds go module cache when enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "go",
+        packageManager: "go",
+        runtimeVersion: "1.22",
+        installCommand: "go mod download",
+        testCommand: "go test ./...",
+        ciProvider: "github-actions",
+        confidence: 0.9,
+      },
+      {
+        defaultBranch: "main",
+        includeBuildStep: true,
+        enableCache: true,
+        includeLintStep: false,
+      },
+    );
+
+    expect(yaml).toContain("cache: true");
+  });
+
+  it("places lint between install and test when enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        lintCommand: "npm run lint",
+        testCommand: "npm test",
+        buildCommand: "npm run build",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      {
+        defaultBranch: "main",
+        includeBuildStep: false,
+        enableCache: true,
+        includeLintStep: true,
+      },
+    );
+
+    expect(yaml).toContain("run: npm run lint");
+    expect(yaml.indexOf("run: npm ci")).toBeLessThan(yaml.indexOf("run: npm run lint"));
+    expect(yaml.indexOf("run: npm run lint")).toBeLessThan(yaml.indexOf("run: npm test"));
+    expect(yaml).not.toContain("run: npm run build");
   });
 });

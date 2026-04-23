@@ -11,6 +11,8 @@ import type { ProjectInfo, WorkflowOptions } from "./types.js";
 const DEFAULT_WORKFLOW_OPTIONS: WorkflowOptions = {
   defaultBranch: "main",
   includeBuildStep: true,
+  enableCache: false,
+  includeLintStep: false,
 };
 
 export type WorkflowWriteMode = "ask" | "overwrite" | "skip";
@@ -29,6 +31,8 @@ function resolveWorkflowOptions(options?: Partial<WorkflowOptions>): WorkflowOpt
   return {
     defaultBranch: options?.defaultBranch ?? DEFAULT_WORKFLOW_OPTIONS.defaultBranch,
     includeBuildStep: options?.includeBuildStep ?? DEFAULT_WORKFLOW_OPTIONS.includeBuildStep,
+    enableCache: options?.enableCache ?? DEFAULT_WORKFLOW_OPTIONS.enableCache,
+    includeLintStep: options?.includeLintStep ?? DEFAULT_WORKFLOW_OPTIONS.includeLintStep,
   };
 }
 

@@ -39,6 +39,7 @@ export interface ProjectInfo {
   packageManager?: PackageManagerType;
   runtimeVersion?: string;
   installCommand?: string;
+  lintCommand?: string;
   testCommand?: string;
   buildCommand?: string;
   ciProvider: "github-actions";
@@ -60,6 +61,8 @@ export interface WorkflowJob {
 export interface WorkflowOptions {
   defaultBranch: "main" | "master";
   includeBuildStep: boolean;
+  enableCache: boolean;
+  includeLintStep: boolean;
 }
 
 export interface WorkflowConfig {
