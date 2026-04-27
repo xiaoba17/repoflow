@@ -171,6 +171,28 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml).toContain("cache: pip");
   });
 
+  it("adds poetry cache when enabled for python", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "python",
+        packageManager: "poetry",
+        runtimeVersion: "3.11",
+        installCommand: "poetry install --no-interaction",
+        testCommand: "poetry run pytest",
+        ciProvider: "github-actions",
+        confidence: 0.9,
+      },
+      {
+        defaultBranch: "main",
+        includeBuildStep: true,
+        enableCache: true,
+        includeLintStep: false,
+      },
+    );
+
+    expect(yaml).toContain("cache: poetry");
+  });
+
   it("adds go module cache when enabled", () => {
     const yaml = renderGitHubActionsWorkflow(
       {
@@ -218,5 +240,63 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml.indexOf("run: npm ci")).toBeLessThan(yaml.indexOf("run: npm run lint"));
     expect(yaml.indexOf("run: npm run lint")).toBeLessThan(yaml.indexOf("run: npm test"));
     expect(yaml).not.toContain("run: npm run build");
+  });
+
+  it("places python lint between install and test when enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "python",
+        packageManager: "poetry",
+        runtimeVersion: "3.11",
+        installCommand: "poetry install --no-interaction",
+        lintCommand: "poetry run ruff check .",
+        testCommand: "poetry run pytest",
+        ciProvider: "github-actions",
+        confidence: 0.9,
+      },
+      {
+        defaultBranch: "main",
+        includeBuildStep: false,
+        enableCache: true,
+        includeLintStep: true,
+      },
+    );
+
+    expect(yaml).toContain("run: poetry run ruff check .");
+    expect(yaml.indexOf("run: poetry install --no-interaction")).toBeLessThan(
+      yaml.indexOf("run: poetry run ruff check ."),
+    );
+    expect(yaml.indexOf("run: poetry run ruff check .")).toBeLessThan(
+      yaml.indexOf("run: poetry run pytest"),
+    );
+  });
+
+  it("places go lint between install and test when enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "go",
+        packageManager: "go",
+        runtimeVersion: "1.22",
+        installCommand: "go mod download",
+        lintCommand: "golangci-lint run",
+        testCommand: "go test ./...",
+        ciProvider: "github-actions",
+        confidence: 0.9,
+      },
+      {
+        defaultBranch: "main",
+        includeBuildStep: false,
+        enableCache: true,
+        includeLintStep: true,
+      },
+    );
+
+    expect(yaml).toContain("run: golangci-lint run");
+    expect(yaml.indexOf("run: go mod download")).toBeLessThan(
+      yaml.indexOf("run: golangci-lint run"),
+    );
+    expect(yaml.indexOf("run: golangci-lint run")).toBeLessThan(
+      yaml.indexOf("run: go test ./..."),
+    );
   });
 });

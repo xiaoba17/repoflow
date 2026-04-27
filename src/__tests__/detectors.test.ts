@@ -166,6 +166,30 @@ describe("detectProject", () => {
     expect(result.packageManager).toBe("pip");
   });
 
+  it("detects a python lint command when ruff is declared", async () => {
+    const root = await createRepo({
+      "requirements.txt": "pytest==8.3.0\nruff==0.6.8\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("python");
+    expect(result.lintCommand).toBe("ruff check .");
+  });
+
+  it("detects a poetry lint command when ruff is declared", async () => {
+    const root = await createRepo({
+      "pyproject.toml": "[tool.poetry]\nname = 'demo'\n[tool.poetry.dependencies]\nruff = '^0.6.8'\n",
+      "poetry.lock": "[[package]]\nname = 'ruff'\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("python");
+    expect(result.packageManager).toBe("poetry");
+    expect(result.lintCommand).toBe("poetry run ruff check .");
+  });
+
   it("detects a go project from go.mod", async () => {
     const root = await createRepo({
       "go.mod": "module example.com/demo\n\ngo 1.22.3\n",
@@ -191,5 +215,17 @@ describe("detectProject", () => {
     expect(result.language).toBe("go");
     expect(result.framework).toBe("gin");
     expect(result.packageManager).toBe("go");
+  });
+
+  it("detects a go lint command when golangci-lint is configured", async () => {
+    const root = await createRepo({
+      "go.mod": "module example.com/demo\n\ngo 1.22.3\n\nrequire github.com/golangci/golangci-lint v1.60.3\n",
+      ".golangci.yml": "run:\n  timeout: 5m\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("go");
+    expect(result.lintCommand).toBe("golangci-lint run");
   });
 });

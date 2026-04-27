@@ -1,0 +1,7 @@
+[[package]]
+name = "pytest"
+version = "8.3.0"
+
+[[package]]
+name = "ruff"
+version = "0.6.8"

@@ -1,0 +1,10 @@
+[tool.poetry]
+name = "python-poetry-ruff"
+version = "0.1.0"
+description = "Fixture for poetry cache and lint"
+authors = ["RepoFlow <dev@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pytest = "^8.3.0"
+ruff = "^0.6.8"

@@ -27,8 +27,14 @@ function createSetupStep(projectInfo: ProjectInfo, options: WorkflowOptions): Wo
         "python-version": projectInfo.runtimeVersion ?? "3.11",
       };
 
-      if (options.enableCache && projectInfo.packageManager === "pip") {
-        withConfig.cache = "pip";
+      if (options.enableCache) {
+        if (projectInfo.packageManager === "pip") {
+          withConfig.cache = "pip";
+        }
+
+        if (projectInfo.packageManager === "poetry") {
+          withConfig.cache = "poetry";
+        }
       }
 
       return {

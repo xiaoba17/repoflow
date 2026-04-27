@@ -9,6 +9,19 @@ function containsDependency(fileContent: string | null, dependencyName: string):
   return pattern.test(fileContent);
 }
 
+function detectLintCommand(scanResult: RepoScanResult): ProjectInfo["lintCommand"] | undefined {
+  const hasRuff =
+    containsDependency(scanResult.rawFiles.requirementsTxt, "ruff") ||
+    containsDependency(scanResult.rawFiles.pyprojectToml, "ruff") ||
+    containsDependency(scanResult.rawFiles.poetryLock, "ruff");
+
+  if (!hasRuff) {
+    return undefined;
+  }
+
+  return scanResult.hasPoetryLock ? "poetry run ruff check ." : "ruff check .";
+}
+
 export function detectPythonProject(scanResult: RepoScanResult): ProjectInfo | null {
   if (!scanResult.hasRequirementsTxt && !scanResult.hasPyprojectToml) {
     return null;
@@ -24,6 +37,7 @@ export function detectPythonProject(scanResult: RepoScanResult): ProjectInfo | n
     language: "python",
     framework,
     packageManager: scanResult.hasPoetryLock ? "poetry" : "pip",
+    lintCommand: detectLintCommand(scanResult),
     ciProvider: "github-actions",
     confidence: scanResult.hasPoetryLock ? 0.9 : 0.85,
   };
