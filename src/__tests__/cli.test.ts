@@ -192,7 +192,7 @@ describe("CLI", () => {
       "package-lock.json": "{}",
     });
 
-    prompts.inject([true, "master", true, false, true]);
+    prompts.inject([true, "master", true, "minimal", true]);
 
     await runInitCommand({ cwd: root });
 
@@ -215,7 +215,7 @@ describe("CLI", () => {
       "package-lock.json": "{}",
     });
 
-    prompts.inject([true, "main", false, false, true]);
+    prompts.inject([true, "main", false, "minimal", true]);
 
     await runInitCommand({ cwd: root });
 
@@ -237,7 +237,7 @@ describe("CLI", () => {
       ".github/workflows/ci.yml": "name: Existing CI\n",
     });
 
-    prompts.inject([true, "main", true, false, true, false]);
+    prompts.inject([true, "main", true, "minimal", true, false]);
 
     await runInitCommand({ cwd: root });
 
@@ -318,7 +318,7 @@ describe("CLI", () => {
       "package-lock.json": "{}",
     });
 
-    prompts.inject([true, "main", true, false, false]);
+    prompts.inject([true, "main", true, "minimal", false]);
 
     const workflowPath = path.join(root, ".github/workflows/ci.yml");
     await expect(runInitCommand({ cwd: root })).resolves.toBeUndefined();
@@ -441,6 +441,39 @@ describe("CLI", () => {
     expect(stdout).toContain("run: poetry run pytest");
   });
 
+  it("detects a python lint command when a fixture declares ruff", async () => {
+    const root = await createRepoFromFixture("python-ruff");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "detect", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed.language).toBe("python");
+    expect(parsed.packageManager).toBe("pip");
+    expect(parsed.lintCommand).toBe("ruff check .");
+  });
+
+  it("detects a go lint command when a fixture declares golangci-lint", async () => {
+    const root = await createRepoFromFixture("go-golangci");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "detect", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed.language).toBe("go");
+    expect(parsed.lintCommand).toBe("golangci-lint run");
+  });
+
   it("generates a workflow from a go fixture repository", async () => {
     const root = await createRepoFromFixture("go-basic");
 
@@ -455,7 +488,7 @@ describe("CLI", () => {
   it("initializes a workflow from a vite fixture repository", async () => {
     const root = await createRepoFromFixture("node-vite");
 
-    prompts.inject([true, "main", true, true, true]);
+    prompts.inject([true, "main", true, "enhanced", true, true]);
 
     await runInitCommand({ cwd: root });
 
@@ -469,7 +502,7 @@ describe("CLI", () => {
   it("initializes a workflow with optional node cache and lint step", async () => {
     const root = await createRepoFromFixture("node-lint");
 
-    prompts.inject([true, "main", true, true, true, true]);
+    prompts.inject([true, "main", true, "enhanced", true, true, true]);
 
     await runInitCommand({ cwd: root });
 
@@ -484,7 +517,7 @@ describe("CLI", () => {
   it("initializes a python workflow with cache when pip is used", async () => {
     const root = await createRepoFromFixture("python-basic");
 
-    prompts.inject([true, "main", true, true]);
+    prompts.inject([true, "main", "enhanced", true, true]);
 
     await runInitCommand({ cwd: root });
 
@@ -497,7 +530,7 @@ describe("CLI", () => {
   it("initializes a go workflow with module cache", async () => {
     const root = await createRepoFromFixture("go-basic");
 
-    prompts.inject([true, "main", true, true, true]);
+    prompts.inject([true, "main", true, "enhanced", true, true]);
 
     await runInitCommand({ cwd: root });
 
@@ -510,7 +543,7 @@ describe("CLI", () => {
   it("does not enable cache or lint when node init keeps the minimal template", async () => {
     const root = await createRepoFromFixture("node-lint");
 
-    prompts.inject([true, "main", true, false, false, true]);
+    prompts.inject([true, "main", true, "minimal", true]);
 
     await runInitCommand({ cwd: root });
 
@@ -521,17 +554,55 @@ describe("CLI", () => {
     expect(written).toContain("run: npm test");
   });
 
-  it("does not prompt for cache on poetry projects during init", async () => {
+  it("initializes a poetry workflow with cache when enhanced mode is selected", async () => {
     const root = await createRepoFromFixture("python-poetry");
 
-    prompts.inject([true, "main", true]);
+    prompts.inject([true, "main", "enhanced", true, true]);
 
     await runInitCommand({ cwd: root });
 
     const workflowPath = path.join(root, ".github/workflows/ci.yml");
     const written = await fs.readFile(workflowPath, "utf8");
     expect(written).toContain("run: poetry install --no-interaction");
-    expect(written).not.toContain("cache:");
+    expect(written).toContain("cache: poetry");
+  });
+
+  it("initializes a poetry workflow with cache and python lint when both are available", async () => {
+    const root = await createRepoFromFixture("python-poetry-ruff");
+
+    prompts.inject([true, "main", "enhanced", true, true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("cache: poetry");
+    expect(written).toContain("run: poetry run ruff check .");
+    expect(written.indexOf("run: poetry install --no-interaction")).toBeLessThan(
+      written.indexOf("run: poetry run ruff check ."),
+    );
+    expect(written.indexOf("run: poetry run ruff check .")).toBeLessThan(
+      written.indexOf("run: poetry run pytest"),
+    );
+  });
+
+  it("initializes a go workflow with optional lint when golangci-lint is detected", async () => {
+    const root = await createRepoFromFixture("go-golangci");
+
+    prompts.inject([true, "main", true, "enhanced", true, true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("cache: true");
+    expect(written).toContain("run: golangci-lint run");
+    expect(written.indexOf("run: go mod download")).toBeLessThan(
+      written.indexOf("run: golangci-lint run"),
+    );
+    expect(written.indexOf("run: golangci-lint run")).toBeLessThan(
+      written.indexOf("run: go test ./..."),
+    );
   });
 
   it("keeps the existing workflow for a fixture repository when overwrite is declined", async () => {

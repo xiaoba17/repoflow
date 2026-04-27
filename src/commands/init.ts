@@ -5,16 +5,25 @@ import { writeLine } from "../utils/logger.js";
 import { confirm, select } from "../utils/prompts.js";
 import type { ProjectInfo } from "../core/types.js";
 
+type TemplateMode = "minimal" | "enhanced";
+
 function supportsCacheOption(projectInfo: ProjectInfo): boolean {
   if (projectInfo.language === "node" || projectInfo.language === "go") {
     return true;
   }
 
-  return projectInfo.language === "python" && projectInfo.packageManager === "pip";
+  return (
+    projectInfo.language === "python" &&
+    (projectInfo.packageManager === "pip" || projectInfo.packageManager === "poetry")
+  );
 }
 
 function supportsLintOption(projectInfo: ProjectInfo): boolean {
-  return projectInfo.language === "node" && Boolean(projectInfo.lintCommand);
+  return Boolean(projectInfo.lintCommand);
+}
+
+function supportsEnhancedTemplate(projectInfo: ProjectInfo): boolean {
+  return supportsCacheOption(projectInfo) || supportsLintOption(projectInfo);
 }
 
 export async function runInitCommand(options: { cwd?: string }): Promise<void> {
@@ -45,12 +54,30 @@ export async function runInitCommand(options: { cwd?: string }): Promise<void> {
   const includeBuildStep = projectInfo.buildCommand
     ? await confirm("Keep the detected build step in the workflow?")
     : false;
-  const enableCache = supportsCacheOption(projectInfo)
-    ? await confirm("Enable dependency cache in the workflow?")
-    : false;
-  const includeLintStep = supportsLintOption(projectInfo)
-    ? await confirm("Add the detected lint step to the workflow?")
-    : false;
+  const templateMode: TemplateMode = supportsEnhancedTemplate(projectInfo)
+    ? ((await select(
+        "Which workflow template should init use?",
+        [
+          {
+            title: "Minimal: keep the default install / test / build flow only",
+            value: "minimal",
+          },
+          {
+            title: "Enhanced: review optional cache and lint additions",
+            value: "enhanced",
+          },
+        ],
+        0,
+      )) ?? "minimal")
+    : "minimal";
+  const enableCache =
+    templateMode === "enhanced" && supportsCacheOption(projectInfo)
+      ? await confirm("Enable dependency cache in the workflow?")
+      : false;
+  const includeLintStep =
+    templateMode === "enhanced" && supportsLintOption(projectInfo)
+      ? await confirm("Add the detected lint step to the workflow?")
+      : false;
 
   const workflow = await previewWorkflow(cwd, {
     defaultBranch,
