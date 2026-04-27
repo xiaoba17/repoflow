@@ -59,7 +59,8 @@ repoflow init --cwd /path/to/repo
 Important behavior:
 
 - `preview` and `generate` keep the minimal workflow template by default.
-- `init` is where optional enhancements such as cache and lint are exposed.
+- `init` now lets you choose between a `minimal` template and an `enhanced` template path.
+- optional enhancements are only exposed when RepoFlow sees a concrete signal for them.
 
 ## Example Detection Output
 
@@ -172,8 +173,9 @@ Flow:
 - confirms the detected project type,
 - lets you choose the default branch: `main` or `master`,
 - lets you keep or remove the detected build step when one exists,
-- can enable dependency cache for supported projects,
-- can add a lint step when a Node project declares `scripts.lint`,
+- lets you choose a `minimal` or `enhanced` workflow path when enhancements are available,
+- can enable dependency cache for supported projects, including `pip`, `poetry`, Node package managers, and Go modules,
+- can add a lint step when RepoFlow detects a supported lint tool such as Node `scripts.lint`, Python `ruff`, or Go `golangci-lint`,
 - shows the final YAML preview before writing,
 - asks before overwriting an existing workflow.
 
@@ -211,6 +213,12 @@ Package manager defaults:
 - `poetry`: `poetry install --no-interaction`, `poetry run pytest`
 - `go`: `go mod download`, `go test ./...`, `go build ./...`
 
+Enhanced template heuristics:
+
+- Python lint is only offered when `ruff` is detected from `requirements.txt`, `pyproject.toml`, or `poetry.lock`
+- Go lint is only offered when `golangci-lint` is detected from `go.mod` or a root `.golangci.*` config
+- choosing the `minimal` path in `init` keeps output aligned with the default `preview / generate` template
+
 ## Fixtures
 
 The repository includes minimal sample projects under `fixtures/`, including:
@@ -223,10 +231,13 @@ The repository includes minimal sample projects under `fixtures/`, including:
 - `fixtures/node-vite`
 - `fixtures/node-lint`
 - `fixtures/python-basic`
+- `fixtures/python-ruff`
 - `fixtures/python-fastapi`
 - `fixtures/python-poetry`
+- `fixtures/python-poetry-ruff`
 - `fixtures/go-basic`
 - `fixtures/go-gin`
+- `fixtures/go-golangci`
 
 These fixtures serve both as sample repositories and as regression inputs for CLI tests.
 
