@@ -4,7 +4,7 @@
 
 RepoFlow is a lightweight open-source CLI that detects your repository type, infers install / test / build commands, and generates a conservative GitHub Actions CI workflow for existing repositories.
 
-It currently supports **Node.js**, **Python**, and **Go** repositories, with framework hints for **Next.js**, **Vite**, **FastAPI**, and **Gin**. RepoFlow can preview workflow YAML in the terminal, generate `.github/workflows/ci.yml`, and guide setup through an interactive `init` flow.
+It currently supports **Node.js**, **Python**, and **Go** repositories, with framework hints for **Next.js**, **Vite**, **NestJS**, **Nuxt**, **FastAPI**, **Django**, **Flask**, and **Gin**. RepoFlow can preview workflow YAML in the terminal, generate `.github/workflows/ci.yml`, and guide setup through an interactive `init` flow.
 
 ## Why RepoFlow
 
@@ -195,7 +195,11 @@ repoflow init --cwd /path/to/repo
 
 - Next.js
 - Vite
+- NestJS
+- Nuxt
 - FastAPI
+- Django
+- Flask
 - Gin
 
 ### Default Runtime and Command Behavior
@@ -213,6 +217,11 @@ Package manager defaults:
 - `poetry`: `poetry install --no-interaction`, `poetry run pytest`
 - `go`: `go mod download`, `go test ./...`, `go build ./...`
 
+Framework-aware defaults:
+
+- Node can fall back to `next build`, `vite build`, `nest build`, or `nuxt build` when a matching framework is detected and no build script is declared
+- Django falls back to `python manage.py test` when no explicit test command or `pytest` signal is detected
+
 Enhanced template heuristics:
 
 - Python lint is only offered when `ruff` is detected from `requirements.txt`, `pyproject.toml`, or `poetry.lock`
@@ -229,10 +238,14 @@ The repository includes minimal sample projects under `fixtures/`, including:
 - `fixtures/node-yarn`
 - `fixtures/node-nextjs`
 - `fixtures/node-vite`
+- `fixtures/node-nestjs`
+- `fixtures/node-nuxt`
 - `fixtures/node-lint`
 - `fixtures/python-basic`
 - `fixtures/python-ruff`
 - `fixtures/python-fastapi`
+- `fixtures/python-django`
+- `fixtures/python-flask`
 - `fixtures/python-poetry`
 - `fixtures/python-poetry-ruff`
 - `fixtures/go-basic`
