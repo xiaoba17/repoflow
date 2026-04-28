@@ -5,12 +5,19 @@ export function applyPythonRules(projectInfo: ProjectInfo): ProjectInfo {
     return projectInfo;
   }
 
+  const defaultTestCommand =
+    projectInfo.framework === "django"
+      ? projectInfo.packageManager === "poetry"
+        ? "poetry run python manage.py test"
+        : "python manage.py test"
+      : undefined;
+
   if (projectInfo.packageManager === "poetry") {
     return {
       ...projectInfo,
       runtimeVersion: projectInfo.runtimeVersion ?? "3.11",
       installCommand: projectInfo.installCommand ?? "poetry install --no-interaction",
-      testCommand: projectInfo.testCommand ?? "poetry run pytest",
+      testCommand: projectInfo.testCommand ?? defaultTestCommand ?? "poetry run pytest",
     };
   }
 
@@ -19,6 +26,6 @@ export function applyPythonRules(projectInfo: ProjectInfo): ProjectInfo {
     packageManager: projectInfo.packageManager ?? "pip",
     runtimeVersion: projectInfo.runtimeVersion ?? "3.11",
     installCommand: projectInfo.installCommand ?? "pip install -r requirements.txt",
-    testCommand: projectInfo.testCommand ?? "pytest",
+    testCommand: projectInfo.testCommand ?? defaultTestCommand ?? "pytest",
   };
 }

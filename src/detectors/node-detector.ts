@@ -79,6 +79,14 @@ function detectFramework(packageJson: NodePackageJson): ProjectInfo["framework"]
     return "vite";
   }
 
+  if (dependencies["@nestjs/core"]) {
+    return "nestjs";
+  }
+
+  if (dependencies.nuxt) {
+    return "nuxt";
+  }
+
   return undefined;
 }
 

@@ -112,6 +112,42 @@ describe("detectProject", () => {
     expect(result.packageManager).toBe("pnpm");
   });
 
+  it("detects a nestjs project from package dependencies", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        dependencies: {
+          "@nestjs/core": "^11.0.0",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.framework).toBe("nestjs");
+    expect(result.packageManager).toBe("npm");
+  });
+
+  it("detects a nuxt project from package dependencies", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        dependencies: {
+          nuxt: "^4.0.0",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.framework).toBe("nuxt");
+    expect(result.packageManager).toBe("npm");
+  });
+
   it("returns unknown when no supported project files are present", async () => {
     const root = await createRepo({
       "README.md": "# demo",
@@ -164,6 +200,32 @@ describe("detectProject", () => {
     expect(result.language).toBe("python");
     expect(result.framework).toBe("fastapi");
     expect(result.packageManager).toBe("pip");
+  });
+
+  it("detects a django project from python dependencies", async () => {
+    const root = await createRepo({
+      "requirements.txt": "django==5.1.0\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("python");
+    expect(result.framework).toBe("django");
+    expect(result.packageManager).toBe("pip");
+    expect(result.testCommand).toBeUndefined();
+  });
+
+  it("detects a flask project from python dependencies", async () => {
+    const root = await createRepo({
+      "requirements.txt": "flask==3.0.3\npytest==8.3.0\n",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("python");
+    expect(result.framework).toBe("flask");
+    expect(result.packageManager).toBe("pip");
+    expect(result.testCommand).toBe("pytest");
   });
 
   it("detects a python lint command when ruff is declared", async () => {

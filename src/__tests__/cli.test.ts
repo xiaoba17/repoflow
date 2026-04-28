@@ -116,6 +116,52 @@ describe("CLI", () => {
     expect(stdout).toContain("run: npx next build");
   });
 
+  it("uses a framework-aware default build command when a nestjs project has no build script", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        dependencies: {
+          "@nestjs/core": "^11.0.0",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "preview", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    expect(stdout).toContain("run: npm ci");
+    expect(stdout).toContain("run: npx nest build");
+  });
+
+  it("uses a framework-aware default build command when a nuxt project has no build script", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        dependencies: {
+          nuxt: "^4.0.0",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "preview", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    expect(stdout).toContain("run: npm ci");
+    expect(stdout).toContain("run: npx nuxt build");
+  });
+
   it("prints python detection results as JSON", async () => {
     const root = await createRepo({
       "requirements.txt": "pytest==8.3.0\n",
@@ -359,6 +405,40 @@ describe("CLI", () => {
     expect(parsed.packageManager).toBe("npm");
   });
 
+  it("detects a nestjs fixture repository", async () => {
+    const root = await createRepoFromFixture("node-nestjs");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "detect", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed.language).toBe("node");
+    expect(parsed.framework).toBe("nestjs");
+    expect(parsed.packageManager).toBe("npm");
+  });
+
+  it("detects a nuxt fixture repository", async () => {
+    const root = await createRepoFromFixture("node-nuxt");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "detect", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed.language).toBe("node");
+    expect(parsed.framework).toBe("nuxt");
+    expect(parsed.packageManager).toBe("npm");
+  });
+
   it("detects a yarn fixture repository", async () => {
     const root = await createRepoFromFixture("node-yarn");
 
@@ -411,6 +491,39 @@ describe("CLI", () => {
 
   it("previews a fastapi fixture repository", async () => {
     const root = await createRepoFromFixture("python-fastapi");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "preview", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    expect(stdout).toContain("actions/setup-python@v5");
+    expect(stdout).toContain("run: pip install -r requirements.txt");
+    expect(stdout).toContain("run: pytest");
+  });
+
+  it("previews a django fixture repository with the conservative test fallback", async () => {
+    const root = await createRepoFromFixture("python-django");
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "preview", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    expect(stdout).toContain("actions/setup-python@v5");
+    expect(stdout).toContain("run: pip install -r requirements.txt");
+    expect(stdout).toContain("run: python manage.py test");
+    expect(stdout).not.toContain("run: pytest");
+  });
+
+  it("previews a flask fixture repository on the generic python path", async () => {
+    const root = await createRepoFromFixture("python-flask");
 
     const { stdout } = await execFileAsync(
       "node",

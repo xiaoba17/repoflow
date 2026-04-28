@@ -1,0 +1,6 @@
+{
+  "name": "nestjs-demo",
+  "dependencies": {
+    "@nestjs/core": "^11.0.0"
+  }
+}

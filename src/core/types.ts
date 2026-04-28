@@ -1,6 +1,14 @@
 export type LanguageType = "node" | "python" | "go" | "unknown";
 
-export type FrameworkType = "nextjs" | "vite" | "fastapi" | "gin";
+export type FrameworkType =
+  | "nextjs"
+  | "vite"
+  | "nestjs"
+  | "nuxt"
+  | "fastapi"
+  | "django"
+  | "flask"
+  | "gin";
 
 export type PackageManagerType =
   | "npm"

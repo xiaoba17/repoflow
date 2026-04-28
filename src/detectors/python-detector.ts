@@ -22,22 +22,50 @@ function detectLintCommand(scanResult: RepoScanResult): ProjectInfo["lintCommand
   return scanResult.hasPoetryLock ? "poetry run ruff check ." : "ruff check .";
 }
 
+function detectTestCommand(scanResult: RepoScanResult): ProjectInfo["testCommand"] | undefined {
+  const hasPytest =
+    containsDependency(scanResult.rawFiles.requirementsTxt, "pytest") ||
+    containsDependency(scanResult.rawFiles.pyprojectToml, "pytest") ||
+    containsDependency(scanResult.rawFiles.poetryLock, "pytest");
+
+  if (!hasPytest) {
+    return undefined;
+  }
+
+  return scanResult.hasPoetryLock ? "poetry run pytest" : "pytest";
+}
+
 export function detectPythonProject(scanResult: RepoScanResult): ProjectInfo | null {
   if (!scanResult.hasRequirementsTxt && !scanResult.hasPyprojectToml) {
     return null;
   }
 
-  const framework =
+  let framework: ProjectInfo["framework"];
+  if (
     containsDependency(scanResult.rawFiles.requirementsTxt, "fastapi") ||
     containsDependency(scanResult.rawFiles.pyprojectToml, "fastapi")
-      ? "fastapi"
-      : undefined;
+  ) {
+    framework = "fastapi";
+  } else if (
+    containsDependency(scanResult.rawFiles.requirementsTxt, "django") ||
+    containsDependency(scanResult.rawFiles.pyprojectToml, "django") ||
+    containsDependency(scanResult.rawFiles.poetryLock, "django")
+  ) {
+    framework = "django";
+  } else if (
+    containsDependency(scanResult.rawFiles.requirementsTxt, "flask") ||
+    containsDependency(scanResult.rawFiles.pyprojectToml, "flask") ||
+    containsDependency(scanResult.rawFiles.poetryLock, "flask")
+  ) {
+    framework = "flask";
+  }
 
   return {
     language: "python",
     framework,
     packageManager: scanResult.hasPoetryLock ? "poetry" : "pip",
     lintCommand: detectLintCommand(scanResult),
+    testCommand: detectTestCommand(scanResult),
     ciProvider: "github-actions",
     confidence: scanResult.hasPoetryLock ? 0.9 : 0.85,
   };

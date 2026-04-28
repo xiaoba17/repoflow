@@ -17,6 +17,10 @@ function frameworkBuildCommand(projectInfo: ProjectInfo): string | undefined {
       return `${execPrefix} next build`;
     case "vite":
       return `${execPrefix} vite build`;
+    case "nestjs":
+      return `${execPrefix} nest build`;
+    case "nuxt":
+      return `${execPrefix} nuxt build`;
     default:
       return undefined;
   }
