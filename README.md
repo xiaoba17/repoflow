@@ -4,7 +4,7 @@
 
 RepoFlow is a lightweight open-source CLI that detects your repository type, infers install / test / build commands, and generates a conservative GitHub Actions CI workflow for existing repositories.
 
-It currently supports **Node.js**, **Python**, and **Go** repositories, with framework hints for **Next.js**, **Vite**, **NestJS**, **Nuxt**, **FastAPI**, **Django**, **Flask**, and **Gin**. RepoFlow can preview workflow YAML in the terminal, generate `.github/workflows/ci.yml`, and guide setup through an interactive `init` flow.
+It supports **Node.js**, **Python**, and **Go** repositories, with framework hints for **Next.js**, **Vite**, **NestJS**, **Nuxt**, **FastAPI**, **Django**, **Flask**, and **Gin**. RepoFlow can preview workflow YAML in the terminal, generate `.github/workflows/ci.yml`, and guide setup through an interactive `init` flow.
 
 ## Why RepoFlow
 
@@ -59,7 +59,7 @@ repoflow init --cwd /path/to/repo
 Important behavior:
 
 - `preview` and `generate` keep the minimal workflow template by default.
-- `init` now lets you choose between a `minimal` template and an `enhanced` template path.
+- `init` lets you choose between a `minimal` template and an `enhanced` template path.
 - optional enhancements are only exposed when RepoFlow sees a concrete signal for them.
 
 ## Example Detection Output
@@ -120,7 +120,7 @@ jobs:
 
 ## Installation
 
-RepoFlow is currently distributed as an npm CLI package.
+RepoFlow is distributed as an npm CLI package.
 
 ```bash
 npm install -g @xiaoba17/repoflow
@@ -128,7 +128,7 @@ npm install -g @xiaoba17/repoflow
 
 Notes:
 
-- GitHub Releases currently provide source snapshots and release notes only.
+- GitHub Releases provide source snapshots and release notes only.
 - Standalone native binaries are not published yet.
 - The installed CLI command is `repoflow`.
 
