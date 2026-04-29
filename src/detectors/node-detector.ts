@@ -4,6 +4,8 @@ interface NodePackageJson {
   scripts?: {
     test?: string;
     lint?: string;
+    typecheck?: string;
+    format?: string;
     build?: string;
   };
   engines?: {
@@ -43,7 +45,7 @@ function commandPrefix(packageManager: ProjectInfo["packageManager"]): string {
 
 function scriptCommand(
   packageManager: ProjectInfo["packageManager"],
-  scriptName: "test" | "lint" | "build",
+  scriptName: "test" | "lint" | "typecheck" | "format" | "build",
 ): string {
   if (packageManager === "npm") {
     if (scriptName === "test") {
@@ -106,6 +108,12 @@ export function detectNodeProject(scanResult: RepoScanResult): ProjectInfo | nul
     runtimeVersion: normalizeRuntimeVersion(packageJson.engines?.node) ?? "20",
     testCommand: packageJson.scripts?.test ? scriptCommand(packageManager, "test") : undefined,
     lintCommand: packageJson.scripts?.lint ? scriptCommand(packageManager, "lint") : undefined,
+    typecheckCommand: packageJson.scripts?.typecheck
+      ? scriptCommand(packageManager, "typecheck")
+      : undefined,
+    formatCheckCommand: packageJson.scripts?.format
+      ? scriptCommand(packageManager, "format")
+      : undefined,
     buildCommand: packageJson.scripts?.build ? scriptCommand(packageManager, "build") : undefined,
     ciProvider: "github-actions",
     confidence: 0.95,

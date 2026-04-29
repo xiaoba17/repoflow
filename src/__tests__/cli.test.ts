@@ -66,6 +66,8 @@ describe("CLI", () => {
     expect(parsed.packageManager).toBe("npm");
     expect(parsed.testCommand).toBe("npm test");
     expect(parsed.lintCommand).toBeUndefined();
+    expect(parsed.typecheckCommand).toBeUndefined();
+    expect(parsed.formatCheckCommand).toBeUndefined();
   });
 
   it("prints workflow preview to stdout", async () => {
@@ -232,6 +234,8 @@ describe("CLI", () => {
         name: "demo",
         scripts: {
           test: "vitest run",
+          typecheck: "tsc --noEmit",
+          format: "prettier --check .",
           build: "tsc -p tsconfig.json",
         },
       }),
@@ -247,6 +251,8 @@ describe("CLI", () => {
     expect(written).toContain("- master");
     expect(written).toContain("run: npm run build");
     expect(written).not.toContain("cache:");
+    expect(written).not.toContain("run: npm run typecheck");
+    expect(written).not.toContain("run: npm run format");
   });
 
   it("initializes a workflow without the build step when disabled", async () => {
@@ -474,6 +480,33 @@ describe("CLI", () => {
     expect(parsed.lintCommand).toBe("npm run lint");
   });
 
+  it("detects node typecheck and format commands when explicit scripts exist", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+          typecheck: "tsc --noEmit",
+          format: "prettier --check .",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const { stdout } = await execFileAsync(
+      "node",
+      ["--import", "tsx", "src/cli.ts", "detect", "--cwd", root],
+      {
+        cwd: path.resolve("."),
+      },
+    );
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed.language).toBe("node");
+    expect(parsed.typecheckCommand).toBe("npm run typecheck");
+    expect(parsed.formatCheckCommand).toBe("npm run format");
+  });
+
   it("previews a python fixture repository", async () => {
     const root = await createRepoFromFixture("python-basic");
 
@@ -627,6 +660,36 @@ describe("CLI", () => {
     expect(written.indexOf("run: npm run lint")).toBeLessThan(written.indexOf("run: npm test"));
   });
 
+  it("initializes a node workflow with detected typecheck and format checks in enhanced mode", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+          typecheck: "tsc --noEmit",
+          format: "prettier --check .",
+          build: "tsc -p tsconfig.json",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    prompts.inject([true, "main", true, "enhanced", true, true, true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("cache: npm");
+    expect(written).toContain("run: npm run typecheck");
+    expect(written).toContain("run: npm run format");
+    expect(written.indexOf("run: npm ci")).toBeLessThan(written.indexOf("run: npm run typecheck"));
+    expect(written.indexOf("run: npm run typecheck")).toBeLessThan(
+      written.indexOf("run: npm run format"),
+    );
+    expect(written.indexOf("run: npm run format")).toBeLessThan(written.indexOf("run: npm test"));
+  });
+
   it("initializes a python workflow with cache when pip is used", async () => {
     const root = await createRepoFromFixture("python-basic");
 
@@ -664,6 +727,8 @@ describe("CLI", () => {
     const written = await fs.readFile(workflowPath, "utf8");
     expect(written).not.toContain("cache:");
     expect(written).not.toContain("run: npm run lint");
+    expect(written).not.toContain("run: npm run typecheck");
+    expect(written).not.toContain("run: npm run format");
     expect(written).toContain("run: npm test");
   });
 

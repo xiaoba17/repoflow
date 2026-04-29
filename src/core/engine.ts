@@ -10,9 +10,14 @@ import type { ProjectInfo, WorkflowOptions } from "./types.js";
 
 const DEFAULT_WORKFLOW_OPTIONS: WorkflowOptions = {
   defaultBranch: "main",
+  profile: "minimal",
   includeBuildStep: true,
-  enableCache: false,
-  includeLintStep: false,
+  capabilities: {
+    cache: false,
+    lint: false,
+    typecheck: false,
+    format: false,
+  },
 };
 
 export type WorkflowWriteMode = "ask" | "overwrite" | "skip";
@@ -30,9 +35,15 @@ export async function resolveProjectInfo(rootPath: string): Promise<ProjectInfo>
 function resolveWorkflowOptions(options?: Partial<WorkflowOptions>): WorkflowOptions {
   return {
     defaultBranch: options?.defaultBranch ?? DEFAULT_WORKFLOW_OPTIONS.defaultBranch,
+    profile: options?.profile ?? DEFAULT_WORKFLOW_OPTIONS.profile,
     includeBuildStep: options?.includeBuildStep ?? DEFAULT_WORKFLOW_OPTIONS.includeBuildStep,
-    enableCache: options?.enableCache ?? DEFAULT_WORKFLOW_OPTIONS.enableCache,
-    includeLintStep: options?.includeLintStep ?? DEFAULT_WORKFLOW_OPTIONS.includeLintStep,
+    capabilities: {
+      cache: options?.capabilities?.cache ?? DEFAULT_WORKFLOW_OPTIONS.capabilities.cache,
+      lint: options?.capabilities?.lint ?? DEFAULT_WORKFLOW_OPTIONS.capabilities.lint,
+      typecheck:
+        options?.capabilities?.typecheck ?? DEFAULT_WORKFLOW_OPTIONS.capabilities.typecheck,
+      format: options?.capabilities?.format ?? DEFAULT_WORKFLOW_OPTIONS.capabilities.format,
+    },
   };
 }
 

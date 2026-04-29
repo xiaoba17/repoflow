@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
 
+import type { WorkflowOptions } from "../core/types.js";
 import { renderGitHubActionsWorkflow } from "../renderers/github-actions-renderer.js";
+
+function createWorkflowOptions(overrides: Partial<WorkflowOptions> = {}): WorkflowOptions {
+  return {
+    defaultBranch: overrides.defaultBranch ?? "main",
+    profile: overrides.profile ?? "minimal",
+    includeBuildStep: overrides.includeBuildStep ?? true,
+    capabilities: {
+      cache: overrides.capabilities?.cache ?? false,
+      lint: overrides.capabilities?.lint ?? false,
+      typecheck: overrides.capabilities?.typecheck ?? false,
+      format: overrides.capabilities?.format ?? false,
+    },
+  };
+}
 
 describe("renderGitHubActionsWorkflow", () => {
   it("renders a minimal node CI workflow", () => {
@@ -42,9 +57,14 @@ describe("renderGitHubActionsWorkflow", () => {
       },
       {
         defaultBranch: "master",
+        profile: "minimal",
         includeBuildStep: true,
-        enableCache: false,
-        includeLintStep: false,
+        capabilities: {
+          cache: false,
+          lint: false,
+          typecheck: false,
+          format: false,
+        },
       },
     );
 
@@ -63,12 +83,7 @@ describe("renderGitHubActionsWorkflow", () => {
         ciProvider: "github-actions",
         confidence: 0.95,
       },
-      {
-        defaultBranch: "main",
-        includeBuildStep: false,
-        enableCache: false,
-        includeLintStep: false,
-      },
+      createWorkflowOptions({ includeBuildStep: false }),
     );
 
     expect(yaml).not.toContain("run: npm run build");
@@ -110,13 +125,15 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml).toContain("run: go build ./...");
   });
 
-  it("keeps the default minimal workflow free of cache and lint steps", () => {
+  it("keeps the default minimal workflow free of enhanced quality steps", () => {
     const yaml = renderGitHubActionsWorkflow({
       language: "node",
       packageManager: "npm",
       runtimeVersion: "20",
       installCommand: "npm ci",
       lintCommand: "npm run lint",
+      typecheckCommand: "npm run typecheck",
+      formatCheckCommand: "npm run format",
       testCommand: "npm test",
       buildCommand: "npm run build",
       ciProvider: "github-actions",
@@ -125,6 +142,8 @@ describe("renderGitHubActionsWorkflow", () => {
 
     expect(yaml).not.toContain("cache:");
     expect(yaml).not.toContain("run: npm run lint");
+    expect(yaml).not.toContain("run: npm run typecheck");
+    expect(yaml).not.toContain("run: npm run format");
   });
 
   it("adds node dependency cache when enabled", () => {
@@ -138,12 +157,10 @@ describe("renderGitHubActionsWorkflow", () => {
         ciProvider: "github-actions",
         confidence: 0.95,
       },
-      {
-        defaultBranch: "main",
-        includeBuildStep: true,
-        enableCache: true,
-        includeLintStep: false,
-      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: { cache: true, lint: false, typecheck: false, format: false },
+      }),
     );
 
     expect(yaml).toContain("cache: pnpm");
@@ -160,12 +177,10 @@ describe("renderGitHubActionsWorkflow", () => {
         ciProvider: "github-actions",
         confidence: 0.9,
       },
-      {
-        defaultBranch: "main",
-        includeBuildStep: true,
-        enableCache: true,
-        includeLintStep: false,
-      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: { cache: true, lint: false, typecheck: false, format: false },
+      }),
     );
 
     expect(yaml).toContain("cache: pip");
@@ -182,12 +197,10 @@ describe("renderGitHubActionsWorkflow", () => {
         ciProvider: "github-actions",
         confidence: 0.9,
       },
-      {
-        defaultBranch: "main",
-        includeBuildStep: true,
-        enableCache: true,
-        includeLintStep: false,
-      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: { cache: true, lint: false, typecheck: false, format: false },
+      }),
     );
 
     expect(yaml).toContain("cache: poetry");
@@ -204,12 +217,10 @@ describe("renderGitHubActionsWorkflow", () => {
         ciProvider: "github-actions",
         confidence: 0.9,
       },
-      {
-        defaultBranch: "main",
-        includeBuildStep: true,
-        enableCache: true,
-        includeLintStep: false,
-      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: { cache: true, lint: false, typecheck: false, format: false },
+      }),
     );
 
     expect(yaml).toContain("cache: true");
@@ -228,12 +239,11 @@ describe("renderGitHubActionsWorkflow", () => {
         ciProvider: "github-actions",
         confidence: 0.95,
       },
-      {
-        defaultBranch: "main",
+      createWorkflowOptions({
+        profile: "enhanced",
         includeBuildStep: false,
-        enableCache: true,
-        includeLintStep: true,
-      },
+        capabilities: { cache: true, lint: true, typecheck: false, format: false },
+      }),
     );
 
     expect(yaml).toContain("run: npm run lint");
@@ -254,12 +264,11 @@ describe("renderGitHubActionsWorkflow", () => {
         ciProvider: "github-actions",
         confidence: 0.9,
       },
-      {
-        defaultBranch: "main",
+      createWorkflowOptions({
+        profile: "enhanced",
         includeBuildStep: false,
-        enableCache: true,
-        includeLintStep: true,
-      },
+        capabilities: { cache: true, lint: true, typecheck: false, format: false },
+      }),
     );
 
     expect(yaml).toContain("run: poetry run ruff check .");
@@ -283,12 +292,11 @@ describe("renderGitHubActionsWorkflow", () => {
         ciProvider: "github-actions",
         confidence: 0.9,
       },
-      {
-        defaultBranch: "main",
+      createWorkflowOptions({
+        profile: "enhanced",
         includeBuildStep: false,
-        enableCache: true,
-        includeLintStep: true,
-      },
+        capabilities: { cache: true, lint: true, typecheck: false, format: false },
+      }),
     );
 
     expect(yaml).toContain("run: golangci-lint run");
@@ -298,5 +306,79 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml.indexOf("run: golangci-lint run")).toBeLessThan(
       yaml.indexOf("run: go test ./..."),
     );
+  });
+
+  it("adds a detected typecheck step when enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        typecheckCommand: "npm run typecheck",
+        testCommand: "npm test",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: { cache: false, lint: false, typecheck: true, format: false },
+      }),
+    );
+
+    expect(yaml).toContain("run: npm run typecheck");
+    expect(yaml.indexOf("run: npm ci")).toBeLessThan(yaml.indexOf("run: npm run typecheck"));
+    expect(yaml.indexOf("run: npm run typecheck")).toBeLessThan(yaml.indexOf("run: npm test"));
+  });
+
+  it("adds a detected format check step when enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        formatCheckCommand: "npm run format",
+        testCommand: "npm test",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: { cache: false, lint: false, typecheck: false, format: true },
+      }),
+    );
+
+    expect(yaml).toContain("run: npm run format");
+    expect(yaml.indexOf("run: npm ci")).toBeLessThan(yaml.indexOf("run: npm run format"));
+    expect(yaml.indexOf("run: npm run format")).toBeLessThan(yaml.indexOf("run: npm test"));
+  });
+
+  it("keeps enhanced quality steps in a fixed order", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        lintCommand: "npm run lint",
+        typecheckCommand: "npm run typecheck",
+        formatCheckCommand: "npm run format",
+        testCommand: "npm test",
+        buildCommand: "npm run build",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: { cache: false, lint: true, typecheck: true, format: true },
+      }),
+    );
+
+    expect(yaml.indexOf("run: npm ci")).toBeLessThan(yaml.indexOf("run: npm run lint"));
+    expect(yaml.indexOf("run: npm run lint")).toBeLessThan(yaml.indexOf("run: npm run typecheck"));
+    expect(yaml.indexOf("run: npm run typecheck")).toBeLessThan(yaml.indexOf("run: npm run format"));
+    expect(yaml.indexOf("run: npm run format")).toBeLessThan(yaml.indexOf("run: npm test"));
+    expect(yaml.indexOf("run: npm test")).toBeLessThan(yaml.indexOf("run: npm run build"));
   });
 });

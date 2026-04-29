@@ -3,9 +3,7 @@ import { RepoFlowError } from "../utils/errors.js";
 import { resolveCwd } from "../utils/fs.js";
 import { writeLine } from "../utils/logger.js";
 import { confirm, select } from "../utils/prompts.js";
-import type { ProjectInfo } from "../core/types.js";
-
-type TemplateMode = "minimal" | "enhanced";
+import type { ProjectInfo, WorkflowOptions } from "../core/types.js";
 
 function supportsCacheOption(projectInfo: ProjectInfo): boolean {
   if (projectInfo.language === "node" || projectInfo.language === "go") {
@@ -22,8 +20,21 @@ function supportsLintOption(projectInfo: ProjectInfo): boolean {
   return Boolean(projectInfo.lintCommand);
 }
 
+function supportsTypecheckOption(projectInfo: ProjectInfo): boolean {
+  return Boolean(projectInfo.typecheckCommand);
+}
+
+function supportsFormatOption(projectInfo: ProjectInfo): boolean {
+  return Boolean(projectInfo.formatCheckCommand);
+}
+
 function supportsEnhancedTemplate(projectInfo: ProjectInfo): boolean {
-  return supportsCacheOption(projectInfo) || supportsLintOption(projectInfo);
+  return (
+    supportsCacheOption(projectInfo) ||
+    supportsLintOption(projectInfo) ||
+    supportsTypecheckOption(projectInfo) ||
+    supportsFormatOption(projectInfo)
+  );
 }
 
 export async function runInitCommand(options: { cwd?: string }): Promise<void> {
@@ -54,7 +65,7 @@ export async function runInitCommand(options: { cwd?: string }): Promise<void> {
   const includeBuildStep = projectInfo.buildCommand
     ? await confirm("Keep the detected build step in the workflow?")
     : false;
-  const templateMode: TemplateMode = supportsEnhancedTemplate(projectInfo)
+  const profile: WorkflowOptions["profile"] = supportsEnhancedTemplate(projectInfo)
     ? ((await select(
         "Which workflow template should init use?",
         [
@@ -70,20 +81,33 @@ export async function runInitCommand(options: { cwd?: string }): Promise<void> {
         0,
       )) ?? "minimal")
     : "minimal";
-  const enableCache =
-    templateMode === "enhanced" && supportsCacheOption(projectInfo)
+  const cache =
+    profile === "enhanced" && supportsCacheOption(projectInfo)
       ? await confirm("Enable dependency cache in the workflow?")
       : false;
-  const includeLintStep =
-    templateMode === "enhanced" && supportsLintOption(projectInfo)
+  const lint =
+    profile === "enhanced" && supportsLintOption(projectInfo)
       ? await confirm("Add the detected lint step to the workflow?")
+      : false;
+  const typecheck =
+    profile === "enhanced" && supportsTypecheckOption(projectInfo)
+      ? await confirm("Add the detected typecheck step to the workflow?")
+      : false;
+  const format =
+    profile === "enhanced" && supportsFormatOption(projectInfo)
+      ? await confirm("Add the detected format check step to the workflow?")
       : false;
 
   const workflow = await previewWorkflow(cwd, {
     defaultBranch,
+    profile,
     includeBuildStep,
-    enableCache,
-    includeLintStep,
+    capabilities: {
+      cache,
+      lint,
+      typecheck,
+      format,
+    },
   });
 
   writeLine(workflow);

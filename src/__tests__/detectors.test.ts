@@ -61,6 +61,8 @@ describe("detectProject", () => {
         name: "demo",
         scripts: {
           test: "vitest run",
+          typecheck: "tsc --noEmit",
+          format: "prettier --check .",
           build: "tsc -p tsconfig.json",
         },
       }),
@@ -73,6 +75,8 @@ describe("detectProject", () => {
     expect(result.framework).toBeUndefined();
     expect(result.packageManager).toBe("npm");
     expect(result.testCommand).toBe("npm test");
+    expect(result.typecheckCommand).toBe("npm run typecheck");
+    expect(result.formatCheckCommand).toBe("npm run format");
     expect(result.buildCommand).toBe("npm run build");
   });
 
@@ -171,6 +175,8 @@ describe("detectProject", () => {
     expect(result.framework).toBeUndefined();
     expect(result.packageManager).toBe("pip");
     expect(result.runtimeVersion).toBeUndefined();
+    expect(result.typecheckCommand).toBeUndefined();
+    expect(result.formatCheckCommand).toBeUndefined();
     expect(result.ciProvider).toBe("github-actions");
     expect(result.confidence).toBeGreaterThan(0.7);
   });
@@ -263,6 +269,8 @@ describe("detectProject", () => {
     expect(result.framework).toBeUndefined();
     expect(result.packageManager).toBe("go");
     expect(result.runtimeVersion).toBe("1.22");
+    expect(result.typecheckCommand).toBeUndefined();
+    expect(result.formatCheckCommand).toBeUndefined();
     expect(result.ciProvider).toBe("github-actions");
     expect(result.confidence).toBeGreaterThan(0.8);
   });
@@ -289,5 +297,23 @@ describe("detectProject", () => {
 
     expect(result.language).toBe("go");
     expect(result.lintCommand).toBe("golangci-lint run");
+  });
+
+  it("does not infer node typecheck or format commands without explicit scripts", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.typecheckCommand).toBeUndefined();
+    expect(result.formatCheckCommand).toBeUndefined();
   });
 });

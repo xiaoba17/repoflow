@@ -48,6 +48,8 @@ export interface ProjectInfo {
   runtimeVersion?: string;
   installCommand?: string;
   lintCommand?: string;
+  typecheckCommand?: string;
+  formatCheckCommand?: string;
   testCommand?: string;
   buildCommand?: string;
   ciProvider: "github-actions";
@@ -68,9 +70,14 @@ export interface WorkflowJob {
 
 export interface WorkflowOptions {
   defaultBranch: "main" | "master";
+  profile: "minimal" | "enhanced";
   includeBuildStep: boolean;
-  enableCache: boolean;
-  includeLintStep: boolean;
+  capabilities: {
+    cache: boolean;
+    lint: boolean;
+    typecheck: boolean;
+    format: boolean;
+  };
 }
 
 export interface WorkflowConfig {

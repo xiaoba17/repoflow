@@ -2,6 +2,13 @@ import YAML from "yaml";
 
 import type { ProjectInfo, WorkflowConfig, WorkflowOptions, WorkflowStep } from "../core/types.js";
 
+function capabilityEnabled(
+  options: WorkflowOptions,
+  capability: keyof WorkflowOptions["capabilities"],
+): boolean {
+  return options.profile === "enhanced" && options.capabilities[capability];
+}
+
 function createSetupStep(projectInfo: ProjectInfo, options: WorkflowOptions): WorkflowStep | null {
   switch (projectInfo.language) {
     case "node": {
@@ -13,7 +20,7 @@ function createSetupStep(projectInfo: ProjectInfo, options: WorkflowOptions): Wo
         "node-version": normalizedVersion,
       };
 
-      if (options.enableCache && projectInfo.packageManager) {
+      if (capabilityEnabled(options, "cache") && projectInfo.packageManager) {
         withConfig.cache = projectInfo.packageManager;
       }
 
@@ -27,7 +34,7 @@ function createSetupStep(projectInfo: ProjectInfo, options: WorkflowOptions): Wo
         "python-version": projectInfo.runtimeVersion ?? "3.11",
       };
 
-      if (options.enableCache) {
+      if (capabilityEnabled(options, "cache")) {
         if (projectInfo.packageManager === "pip") {
           withConfig.cache = "pip";
         }
@@ -47,7 +54,7 @@ function createSetupStep(projectInfo: ProjectInfo, options: WorkflowOptions): Wo
         "go-version": projectInfo.runtimeVersion ?? "1.22",
       };
 
-      if (options.enableCache) {
+      if (capabilityEnabled(options, "cache")) {
         withConfig.cache = true;
       }
 
@@ -65,9 +72,14 @@ export function renderGitHubActionsWorkflow(
   projectInfo: ProjectInfo,
   options: WorkflowOptions = {
     defaultBranch: "main",
+    profile: "minimal",
     includeBuildStep: true,
-    enableCache: false,
-    includeLintStep: false,
+    capabilities: {
+      cache: false,
+      lint: false,
+      typecheck: false,
+      format: false,
+    },
   },
 ): string {
   const steps: WorkflowStep[] = [{ uses: "actions/checkout@v6" }];
@@ -81,8 +93,16 @@ export function renderGitHubActionsWorkflow(
     steps.push({ run: projectInfo.installCommand });
   }
 
-  if (options.includeLintStep && projectInfo.lintCommand) {
+  if (capabilityEnabled(options, "lint") && projectInfo.lintCommand) {
     steps.push({ run: projectInfo.lintCommand });
+  }
+
+  if (capabilityEnabled(options, "typecheck") && projectInfo.typecheckCommand) {
+    steps.push({ run: projectInfo.typecheckCommand });
+  }
+
+  if (capabilityEnabled(options, "format") && projectInfo.formatCheckCommand) {
+    steps.push({ run: projectInfo.formatCheckCommand });
   }
 
   if (projectInfo.testCommand) {
