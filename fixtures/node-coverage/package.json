@@ -1,0 +1,8 @@
+{
+  "name": "node-coverage",
+  "scripts": {
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "build": "tsc -p tsconfig.json"
+  }
+}

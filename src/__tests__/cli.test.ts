@@ -743,6 +743,20 @@ describe("CLI", () => {
     expect(written).toContain("path: coverage/lcov.info");
   });
 
+  it("initializes a fixture-backed node coverage workflow with artifact upload", async () => {
+    const root = await createRepoFromFixture("node-coverage-artifact");
+
+    prompts.inject([true, "main", true, "enhanced", true, true, true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("run: npm run coverage");
+    expect(written).toContain("uses: actions/upload-artifact@v4");
+    expect(written).toContain("path: coverage/lcov.info");
+  });
+
   it("initializes a python workflow with cache when pip is used", async () => {
     const root = await createRepoFromFixture("python-basic");
 

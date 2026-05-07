@@ -1,0 +1,13 @@
+{
+  "name": "node-coverage-artifact",
+  "scripts": {
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "build": "tsc -p tsconfig.json"
+  },
+  "config": {
+    "repoflow": {
+      "coverageArtifactPath": "coverage/lcov.info"
+    }
+  }
+}
