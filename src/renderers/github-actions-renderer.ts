@@ -9,11 +9,12 @@ function capabilityEnabled(
   return options.profile === "enhanced" && options.capabilities[capability];
 }
 
-function artifactUploadEnabled(options: WorkflowOptions): boolean {
+function artifactUploadEnabled(projectInfo: ProjectInfo, options: WorkflowOptions): boolean {
   return (
     options.profile === "enhanced" &&
     options.capabilities.coverage &&
-    options.capabilities.coverageArtifact
+    options.capabilities.coverageArtifact &&
+    Boolean(projectInfo.coverageCommand)
   );
 }
 
@@ -127,7 +128,7 @@ export function renderGitHubActionsWorkflow(
     steps.push({ run: projectInfo.buildCommand });
   }
 
-  if (artifactUploadEnabled(options) && projectInfo.coverageArtifactPath) {
+  if (artifactUploadEnabled(projectInfo, options) && projectInfo.coverageArtifactPath) {
     steps.push({
       uses: "actions/upload-artifact@v4",
       with: {

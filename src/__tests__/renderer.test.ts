@@ -447,4 +447,74 @@ describe("renderGitHubActionsWorkflow", () => {
       yaml.indexOf("uses: actions/upload-artifact@v4"),
     );
   });
+
+  it("does not upload a coverage artifact when the coverage step is unavailable", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        coverageArtifactPath: "coverage/lcov.info",
+        testCommand: "npm test",
+        buildCommand: "npm run build",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: {
+          cache: false,
+          lint: false,
+          typecheck: false,
+          format: false,
+          coverage: true,
+          coverageArtifact: true,
+        },
+      }),
+    );
+
+    expect(yaml).not.toContain("uses: actions/upload-artifact@v4");
+  });
+
+  it("keeps enhanced quality and coverage steps in a fixed order", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        lintCommand: "npm run lint",
+        typecheckCommand: "npm run typecheck",
+        formatCheckCommand: "npm run format",
+        coverageCommand: "npm run coverage",
+        coverageArtifactPath: "coverage/lcov.info",
+        testCommand: "npm test",
+        buildCommand: "npm run build",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: {
+          cache: false,
+          lint: true,
+          typecheck: true,
+          format: true,
+          coverage: true,
+          coverageArtifact: true,
+        },
+      }),
+    );
+
+    expect(yaml.indexOf("run: npm ci")).toBeLessThan(yaml.indexOf("run: npm run lint"));
+    expect(yaml.indexOf("run: npm run lint")).toBeLessThan(yaml.indexOf("run: npm run typecheck"));
+    expect(yaml.indexOf("run: npm run typecheck")).toBeLessThan(yaml.indexOf("run: npm run format"));
+    expect(yaml.indexOf("run: npm run format")).toBeLessThan(yaml.indexOf("run: npm run coverage"));
+    expect(yaml.indexOf("run: npm run coverage")).toBeLessThan(yaml.indexOf("run: npm test"));
+    expect(yaml.indexOf("run: npm test")).toBeLessThan(yaml.indexOf("run: npm run build"));
+    expect(yaml.indexOf("run: npm run build")).toBeLessThan(
+      yaml.indexOf("uses: actions/upload-artifact@v4"),
+    );
+  });
 });
