@@ -148,6 +148,22 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml).not.toContain("run: npm run format");
   });
 
+  it("does not render coverage in the minimal template even when detected", () => {
+    const yaml = renderGitHubActionsWorkflow({
+      language: "node",
+      packageManager: "npm",
+      runtimeVersion: "20",
+      installCommand: "npm ci",
+      coverageCommand: "npm run coverage",
+      testCommand: "npm test",
+      buildCommand: "npm run build",
+      ciProvider: "github-actions",
+      confidence: 0.95,
+    });
+
+    expect(yaml).not.toContain("run: npm run coverage");
+  });
+
   it("adds node dependency cache when enabled", () => {
     const yaml = renderGitHubActionsWorkflow(
       {
