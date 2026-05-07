@@ -107,6 +107,8 @@ export async function runInitCommand(options: { cwd?: string }): Promise<void> {
       lint,
       typecheck,
       format,
+      coverage: false,
+      coverageArtifact: false,
     },
   });
 

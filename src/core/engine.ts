@@ -17,6 +17,8 @@ const DEFAULT_WORKFLOW_OPTIONS: WorkflowOptions = {
     lint: false,
     typecheck: false,
     format: false,
+    coverage: false,
+    coverageArtifact: false,
   },
 };
 
@@ -43,6 +45,11 @@ function resolveWorkflowOptions(options?: Partial<WorkflowOptions>): WorkflowOpt
       typecheck:
         options?.capabilities?.typecheck ?? DEFAULT_WORKFLOW_OPTIONS.capabilities.typecheck,
       format: options?.capabilities?.format ?? DEFAULT_WORKFLOW_OPTIONS.capabilities.format,
+      coverage:
+        options?.capabilities?.coverage ?? DEFAULT_WORKFLOW_OPTIONS.capabilities.coverage,
+      coverageArtifact:
+        options?.capabilities?.coverageArtifact ??
+        DEFAULT_WORKFLOW_OPTIONS.capabilities.coverageArtifact,
     },
   };
 }

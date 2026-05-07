@@ -79,6 +79,8 @@ export function renderGitHubActionsWorkflow(
       lint: false,
       typecheck: false,
       format: false,
+      coverage: false,
+      coverageArtifact: false,
     },
   },
 ): string {
