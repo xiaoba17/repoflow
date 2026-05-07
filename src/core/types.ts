@@ -50,6 +50,8 @@ export interface ProjectInfo {
   lintCommand?: string;
   typecheckCommand?: string;
   formatCheckCommand?: string;
+  coverageCommand?: string;
+  coverageArtifactPath?: string;
   testCommand?: string;
   buildCommand?: string;
   ciProvider: "github-actions";
@@ -77,6 +79,8 @@ export interface WorkflowOptions {
     lint: boolean;
     typecheck: boolean;
     format: boolean;
+    coverage: boolean;
+    coverageArtifact: boolean;
   };
 }
 

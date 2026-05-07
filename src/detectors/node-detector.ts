@@ -6,10 +6,16 @@ interface NodePackageJson {
     lint?: string;
     typecheck?: string;
     format?: string;
+    coverage?: string;
     build?: string;
   };
   engines?: {
     node?: string;
+  };
+  config?: {
+    repoflow?: {
+      coverageArtifactPath?: string;
+    };
   };
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
@@ -45,7 +51,7 @@ function commandPrefix(packageManager: ProjectInfo["packageManager"]): string {
 
 function scriptCommand(
   packageManager: ProjectInfo["packageManager"],
-  scriptName: "test" | "lint" | "typecheck" | "format" | "build",
+  scriptName: "test" | "lint" | "typecheck" | "format" | "coverage" | "build",
 ): string {
   if (packageManager === "npm") {
     if (scriptName === "test") {
@@ -100,6 +106,9 @@ export function detectNodeProject(scanResult: RepoScanResult): ProjectInfo | nul
   const packageJson = JSON.parse(scanResult.rawFiles.packageJson) as NodePackageJson;
   const packageManager = inferPackageManager(scanResult);
   const framework = detectFramework(packageJson);
+  const coverageCommand = packageJson.scripts?.coverage
+    ? scriptCommand(packageManager, "coverage")
+    : undefined;
 
   return {
     language: "node",
@@ -113,6 +122,10 @@ export function detectNodeProject(scanResult: RepoScanResult): ProjectInfo | nul
       : undefined,
     formatCheckCommand: packageJson.scripts?.format
       ? scriptCommand(packageManager, "format")
+      : undefined,
+    coverageCommand,
+    coverageArtifactPath: coverageCommand
+      ? packageJson.config?.repoflow?.coverageArtifactPath
       : undefined,
     buildCommand: packageJson.scripts?.build ? scriptCommand(packageManager, "build") : undefined,
     ciProvider: "github-actions",

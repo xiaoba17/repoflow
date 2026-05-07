@@ -80,6 +80,72 @@ describe("detectProject", () => {
     expect(result.buildCommand).toBe("npm run build");
   });
 
+  it("detects a node coverage command when an explicit coverage script exists", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+          coverage: "vitest run --coverage",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.coverageCommand).toBe("npm run coverage");
+    expect(result.coverageArtifactPath).toBeUndefined();
+  });
+
+  it("detects a node coverage artifact path when package metadata provides one", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+          coverage: "vitest run --coverage",
+        },
+        config: {
+          repoflow: {
+            coverageArtifactPath: "coverage/lcov.info",
+          },
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.coverageCommand).toBe("npm run coverage");
+    expect(result.coverageArtifactPath).toBe("coverage/lcov.info");
+  });
+
+  it("does not infer a node coverage command without an explicit coverage script", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+        },
+        config: {
+          repoflow: {
+            coverageArtifactPath: "coverage/lcov.info",
+          },
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    const result = await detectProject(root);
+
+    expect(result.language).toBe("node");
+    expect(result.coverageCommand).toBeUndefined();
+    expect(result.coverageArtifactPath).toBeUndefined();
+  });
+
   it("detects a next.js project from package dependencies", async () => {
     const root = await createRepo({
       "package.json": JSON.stringify({
