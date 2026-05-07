@@ -28,12 +28,21 @@ function supportsFormatOption(projectInfo: ProjectInfo): boolean {
   return Boolean(projectInfo.formatCheckCommand);
 }
 
+function supportsCoverageOption(projectInfo: ProjectInfo): boolean {
+  return Boolean(projectInfo.coverageCommand);
+}
+
+function supportsCoverageArtifactOption(projectInfo: ProjectInfo): boolean {
+  return Boolean(projectInfo.coverageArtifactPath);
+}
+
 function supportsEnhancedTemplate(projectInfo: ProjectInfo): boolean {
   return (
     supportsCacheOption(projectInfo) ||
     supportsLintOption(projectInfo) ||
     supportsTypecheckOption(projectInfo) ||
-    supportsFormatOption(projectInfo)
+    supportsFormatOption(projectInfo) ||
+    supportsCoverageOption(projectInfo)
   );
 }
 
@@ -97,6 +106,14 @@ export async function runInitCommand(options: { cwd?: string }): Promise<void> {
     profile === "enhanced" && supportsFormatOption(projectInfo)
       ? await confirm("Add the detected format check step to the workflow?")
       : false;
+  const coverage =
+    profile === "enhanced" && supportsCoverageOption(projectInfo)
+      ? await confirm("Add the detected coverage step to the workflow?")
+      : false;
+  const coverageArtifact =
+    profile === "enhanced" && coverage && supportsCoverageArtifactOption(projectInfo)
+      ? await confirm("Upload the detected coverage artifact from the workflow?")
+      : false;
 
   const workflow = await previewWorkflow(cwd, {
     defaultBranch,
@@ -107,8 +124,8 @@ export async function runInitCommand(options: { cwd?: string }): Promise<void> {
       lint,
       typecheck,
       format,
-      coverage: false,
-      coverageArtifact: false,
+      coverage,
+      coverageArtifact,
     },
   });
 

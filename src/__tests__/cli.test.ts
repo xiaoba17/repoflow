@@ -690,6 +690,59 @@ describe("CLI", () => {
     expect(written.indexOf("run: npm run format")).toBeLessThan(written.indexOf("run: npm test"));
   });
 
+  it("initializes a node workflow with a detected coverage step in enhanced mode", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+          coverage: "vitest run --coverage",
+          build: "tsc -p tsconfig.json",
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    prompts.inject([true, "main", true, "enhanced", true, true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("run: npm run coverage");
+    expect(written.indexOf("run: npm run coverage")).toBeLessThan(written.indexOf("run: npm test"));
+    expect(written).not.toContain("actions/upload-artifact@v4");
+  });
+
+  it("initializes a node workflow with optional coverage artifact upload", async () => {
+    const root = await createRepo({
+      "package.json": JSON.stringify({
+        name: "demo",
+        scripts: {
+          test: "vitest run",
+          coverage: "vitest run --coverage",
+          build: "tsc -p tsconfig.json",
+        },
+        config: {
+          repoflow: {
+            coverageArtifactPath: "coverage/lcov.info",
+          },
+        },
+      }),
+      "package-lock.json": "{}",
+    });
+
+    prompts.inject([true, "main", true, "enhanced", true, true, true, true]);
+
+    await runInitCommand({ cwd: root });
+
+    const workflowPath = path.join(root, ".github/workflows/ci.yml");
+    const written = await fs.readFile(workflowPath, "utf8");
+    expect(written).toContain("run: npm run coverage");
+    expect(written).toContain("uses: actions/upload-artifact@v4");
+    expect(written).toContain("path: coverage/lcov.info");
+  });
+
   it("initializes a python workflow with cache when pip is used", async () => {
     const root = await createRepoFromFixture("python-basic");
 

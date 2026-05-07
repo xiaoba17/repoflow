@@ -13,6 +13,8 @@ function createWorkflowOptions(overrides: Partial<WorkflowOptions> = {}): Workfl
       lint: overrides.capabilities?.lint ?? false,
       typecheck: overrides.capabilities?.typecheck ?? false,
       format: overrides.capabilities?.format ?? false,
+      coverage: overrides.capabilities?.coverage ?? false,
+      coverageArtifact: overrides.capabilities?.coverageArtifact ?? false,
     },
   };
 }
@@ -380,5 +382,69 @@ describe("renderGitHubActionsWorkflow", () => {
     expect(yaml.indexOf("run: npm run typecheck")).toBeLessThan(yaml.indexOf("run: npm run format"));
     expect(yaml.indexOf("run: npm run format")).toBeLessThan(yaml.indexOf("run: npm test"));
     expect(yaml.indexOf("run: npm test")).toBeLessThan(yaml.indexOf("run: npm run build"));
+  });
+
+  it("adds a detected coverage step when enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        coverageCommand: "npm run coverage",
+        testCommand: "npm test",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: {
+          cache: false,
+          lint: false,
+          typecheck: false,
+          format: false,
+          coverage: true,
+          coverageArtifact: false,
+        },
+      }),
+    );
+
+    expect(yaml).toContain("run: npm run coverage");
+    expect(yaml.indexOf("run: npm run coverage")).toBeLessThan(yaml.indexOf("run: npm test"));
+  });
+
+  it("uploads a coverage artifact only when the path is detected and enabled", () => {
+    const yaml = renderGitHubActionsWorkflow(
+      {
+        language: "node",
+        packageManager: "npm",
+        runtimeVersion: "20",
+        installCommand: "npm ci",
+        coverageCommand: "npm run coverage",
+        coverageArtifactPath: "coverage/lcov.info",
+        testCommand: "npm test",
+        buildCommand: "npm run build",
+        ciProvider: "github-actions",
+        confidence: 0.95,
+      },
+      createWorkflowOptions({
+        profile: "enhanced",
+        capabilities: {
+          cache: false,
+          lint: false,
+          typecheck: false,
+          format: false,
+          coverage: true,
+          coverageArtifact: true,
+        },
+      }),
+    );
+
+    expect(yaml).toContain("uses: actions/upload-artifact@v4");
+    expect(yaml).toContain("name: coverage-report");
+    expect(yaml).toContain("path: coverage/lcov.info");
+    expect(yaml.indexOf("run: npm run build")).toBeLessThan(
+      yaml.indexOf("uses: actions/upload-artifact@v4"),
+    );
   });
 });
